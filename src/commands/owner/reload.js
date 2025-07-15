@@ -281,8 +281,100 @@ module.exports = {
                 info: 'ℹ️'
             }[log.type] || 'ℹ️';
 
+            // Compatibilidad con logs antiguos y nuevos
+            const actionText = log.action ||
+                              (log.module ? `Reload ${log.module}` : null) ||
+                              log.moduleDescription ||
+                              'Acción desconocida';
+
             const logValue = [
-                `${statusIcon} **${log.action}**`,
+                `${statusIcon} **${actionText}**`,
+                `👤 ${log.user?.username || 'Sistema'}`,
+                `⏱️ ${log.duration ? `${log.duration}ms` : 'N/A'}`,
+                `📅 ${log.date} ${log.time}`
+            ].join('\n');
+
+            logsEmbed.addFields([
+                {
+                    name: `${typeIcon} Log #${index + 1}`,
+                    value: logValue,
+                    inline: true
+                }
+            ]);
+        });
+
+        // Crear botones de acción
+        const actions = [
+            { id: 'refresh_logs', label: '🔄 Actualizar', style: 1, emoji: '🔄' },
+            { id: 'clear_logs', label: '🗑️ Limpiar', style: 4, emoji: '🗑️' },
+            { id: 'export_logs', label: '📤 Exportar', style: 2, emoji: '📤' }
+        ];
+
+        const { buttonIds, row } = interaction.client.createQuickActionButtons(actions);
+
+        await interaction.editReply({
+            embeds: [logsEmbed],
+            components: [row]
+        });
+
+        // Registrar callbacks de botones
+        buttonIds.forEach(({ id, action }) => {
+            interaction.client.registerButtonCallback(id, async (buttonInteraction) => {
+                await this.handleLogAction(buttonInteraction, action);
+            });
+        });
+    },
+
+    /**
+     * Refresca la vista de logs (para botones)
+     */
+    async refreshLogsView(interaction, cantidad = 10, tipo = null) {
+        // Obtener logs y estadísticas
+        const logs = interaction.client.getRecentLogs('databasereload', cantidad, tipo);
+        const stats = interaction.client.getLogStats('databasereload');
+
+        if (logs.length === 0) {
+            const noLogsEmbed = new EmbedBuilder()
+                .setTitle('📋 Logs de Recarga')
+                .setDescription('No se encontraron logs con los criterios especificados.')
+                .setColor(0x999999)
+                .setTimestamp();
+
+            return interaction.editReply({ embeds: [noLogsEmbed], components: [] });
+        }
+
+        // Crear embed principal con estadísticas
+        const logsEmbed = new EmbedBuilder()
+            .setTitle('📋 Logs de Recarga del Sistema')
+            .setDescription(`Mostrando los últimos ${logs.length} logs${tipo ? ` de tipo **${tipo}**` : ''}`)
+            .addFields([
+                {
+                    name: '📊 Estadísticas Generales',
+                    value: `> **Total:** ${stats.total} logs\n> **Hoy:** ${stats.today} logs\n> **Esta semana:** ${stats.thisWeek} logs\n> **Tasa de éxito:** ${stats.successRate}%\n> **Duración promedio:** ${stats.averageDuration}ms`
+                }
+            ])
+            .setColor(0x0099ff)
+            .setTimestamp()
+            .setFooter({ text: `Sistema de logs activo - Actualizado` });
+
+        // Agregar logs individuales
+        logs.forEach((log, index) => {
+            const statusIcon = log.success ? '✅' : '❌';
+            const typeIcon = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            }[log.type] || 'ℹ️';
+
+            // Compatibilidad con logs antiguos y nuevos
+            const actionText = log.action ||
+                              (log.module ? `Reload ${log.module}` : null) ||
+                              log.moduleDescription ||
+                              'Acción desconocida';
+
+            const logValue = [
+                `${statusIcon} **${actionText}**`,
                 `👤 ${log.user?.username || 'Sistema'}`,
                 `⏱️ ${log.duration ? `${log.duration}ms` : 'N/A'}`,
                 `📅 ${log.date} ${log.time}`
@@ -327,8 +419,8 @@ module.exports = {
 
         switch (action) {
             case 'refresh_logs':
-                // Recargar logs
-                await this.handleLogsView(interaction);
+                // Recargar logs sin deferReply (ya fue diferida)
+                await this.refreshLogsView(interaction);
                 break;
 
             case 'clear_logs':
@@ -356,21 +448,14 @@ module.exports = {
                 });
 
                 interaction.client.registerButtonCallback(cancelId, async (btnInt) => {
-                    await this.handleLogsView(btnInt);
+                    await btnInt.deferUpdate();
+                    await this.refreshLogsView(btnInt);
                 });
                 break;
 
             case 'export_logs':
-                // Exportar logs (placeholder)
-                const exportEmbed = new EmbedBuilder()
-                    .setTitle('📤 Exportación de Logs')
-                    .setDescription('Funcionalidad de exportación en desarrollo.')
-                    .setColor(0x0099ff);
-
-                await interaction.editReply({
-                    embeds: [exportEmbed],
-                    components: []
-                });
+                // Mostrar opciones de exportación
+                await this.showExportOptions(interaction);
                 break;
         }
     },
@@ -512,7 +597,7 @@ module.exports = {
     /**
      * Ejecuta recarga selectiva
      */
-    async executeSelectiveReload(interaction, tipo, value) {
+    async executeSelectiveReload(interaction, _tipo, value) {
         await interaction.deferUpdate();
 
         const loadingEmbed = new EmbedBuilder()
@@ -661,5 +746,350 @@ module.exports = {
     getMemoryUsage() {
         const used = process.memoryUsage();
         return `${Math.round(used.heapUsed / 1024 / 1024 * 100) / 100} MB`;
+    },
+
+    /**
+     * Muestra opciones de exportación
+     */
+    async showExportOptions(interaction) {
+        const exportEmbed = new EmbedBuilder()
+            .setTitle('📤 Exportar Logs')
+            .setDescription('Selecciona el formato de exportación:')
+            .addFields([
+                {
+                    name: '📄 Formatos disponibles',
+                    value: '> **JSON** - Formato estructurado para desarrollo\n> **CSV** - Para análisis en Excel/Sheets\n> **TXT** - Formato legible para humanos\n> **MD** - Markdown para documentación'
+                },
+                {
+                    name: '📊 Información',
+                    value: `> Se exportarán todos los logs disponibles\n> Total de registros: ${interaction.client.getLogStats('databasereload').total}`
+                }
+            ])
+            .setColor(0x0099ff)
+            .setTimestamp();
+
+        // Crear botones de formato
+        const formatActions = [
+            { id: 'export_json', label: '📄 JSON', style: 1, emoji: '📄' },
+            { id: 'export_csv', label: '📊 CSV', style: 1, emoji: '📊' },
+            { id: 'export_txt', label: '📝 TXT', style: 1, emoji: '📝' },
+            { id: 'export_md', label: '📋 MD', style: 1, emoji: '📋' }
+        ];
+
+        const { buttonIds, row } = interaction.client.createQuickActionButtons(formatActions);
+
+        await interaction.editReply({
+            embeds: [exportEmbed],
+            components: [row]
+        });
+
+        // Registrar callbacks para cada formato
+        buttonIds.forEach(({ id, action }) => {
+            interaction.client.registerButtonCallback(id, async (buttonInteraction) => {
+                const format = action.replace('export_', '');
+                await this.exportLogs(buttonInteraction, format);
+            });
+        });
+    },
+
+    /**
+     * Exporta logs en el formato especificado
+     */
+    async exportLogs(interaction, format) {
+        await interaction.deferUpdate();
+
+        const progressEmbed = new EmbedBuilder()
+            .setTitle('⏳ Exportando Logs...')
+            .setDescription(`Generando archivo en formato **${format.toUpperCase()}**...`)
+            .setColor(0xffa500);
+
+        await interaction.editReply({
+            embeds: [progressEmbed],
+            components: []
+        });
+
+        try {
+            const logs = interaction.client.getRecentLogs('databasereload', 100); // Exportar hasta 100 logs
+            const stats = interaction.client.getLogStats('databasereload');
+
+            let exportContent = '';
+            let fileName = '';
+
+            switch (format) {
+                case 'json':
+                    exportContent = this.generateJSONExport(logs, stats);
+                    fileName = `reload-logs-${new Date().toISOString().split('T')[0]}.json`;
+                    break;
+                case 'csv':
+                    exportContent = this.generateCSVExport(logs);
+                    fileName = `reload-logs-${new Date().toISOString().split('T')[0]}.csv`;
+                    break;
+                case 'txt':
+                    exportContent = this.generateTXTExport(logs, stats);
+                    fileName = `reload-logs-${new Date().toISOString().split('T')[0]}.txt`;
+                    break;
+                case 'md':
+                    exportContent = this.generateMDExport(logs, stats);
+                    fileName = `reload-logs-${new Date().toISOString().split('T')[0]}.md`;
+                    break;
+            }
+
+            // Crear archivo temporal y enviarlo
+            const fs = require('fs');
+            const path = require('path');
+            const tempDir = path.join(__dirname, '..', '..', '..', 'temp');
+
+            // Crear directorio temp si no existe
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+            }
+
+            const filePath = path.join(tempDir, fileName);
+            fs.writeFileSync(filePath, exportContent, 'utf8');
+
+            const successEmbed = new EmbedBuilder()
+                .setTitle('✅ Exportación Completada')
+                .setDescription(`Logs exportados exitosamente en formato **${format.toUpperCase()}**`)
+                .addFields([
+                    { name: '📄 Archivo', value: fileName, inline: true },
+                    { name: '📊 Registros', value: `${logs.length}`, inline: true },
+                    { name: '💾 Tamaño', value: `${(exportContent.length / 1024).toFixed(2)} KB`, inline: true }
+                ])
+                .setColor(0x00ff00)
+                .setTimestamp();
+
+            // Crear botón para descargar
+            const downloadActions = [
+                { id: 'download_file', label: '⬇️ Descargar', style: 1, emoji: '⬇️' },
+                { id: 'back_to_logs', label: '🔙 Volver', style: 2, emoji: '🔙' }
+            ];
+
+            const { buttonIds: downloadButtonIds, row: downloadRow } = interaction.client.createQuickActionButtons(downloadActions);
+
+            await interaction.editReply({
+                embeds: [successEmbed],
+                components: [downloadRow],
+                files: [{
+                    attachment: filePath,
+                    name: fileName
+                }]
+            });
+
+            // Registrar callbacks
+            downloadButtonIds.forEach(({ id, action }) => {
+                interaction.client.registerButtonCallback(id, async (btnInt) => {
+                    if (action === 'download_file') {
+                        await btnInt.reply({
+                            content: '📁 El archivo ya está disponible arriba para descargar.',
+                            flags: MessageFlags.Ephemeral
+                        });
+                    } else if (action === 'back_to_logs') {
+                        await btnInt.deferUpdate();
+                        await this.refreshLogsView(btnInt);
+                    }
+                });
+            });
+
+            // Limpiar archivo temporal después de 5 minutos
+            setTimeout(() => {
+                try {
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                    }
+                } catch (error) {
+                    console.error('Error limpiando archivo temporal:', error);
+                }
+            }, 5 * 60 * 1000);
+
+        } catch (error) {
+            console.error('Error exportando logs:', error);
+
+            const errorEmbed = new EmbedBuilder()
+                .setTitle('❌ Error en Exportación')
+                .setDescription('Ocurrió un error al exportar los logs.')
+                .addFields([
+                    { name: '🚨 Error', value: `\`\`\`${error.message}\`\`\`` }
+                ])
+                .setColor(0xff0000)
+                .setTimestamp();
+
+            await interaction.editReply({
+                embeds: [errorEmbed],
+                components: []
+            });
+        }
+    },
+
+    /**
+     * Genera exportación en formato JSON
+     */
+    generateJSONExport(logs, stats) {
+        const exportData = {
+            metadata: {
+                exportDate: new Date().toISOString(),
+                exportedBy: 'SuperKode Bot',
+                version: '1.0.0',
+                totalLogs: logs.length,
+                statistics: stats
+            },
+            logs: logs
+        };
+
+        return JSON.stringify(exportData, null, 2);
+    },
+
+    /**
+     * Genera exportación en formato CSV
+     */
+    generateCSVExport(logs) {
+        const headers = [
+            'Timestamp',
+            'Date',
+            'Time',
+            'Type',
+            'Action',
+            'User',
+            'Guild',
+            'Success',
+            'Duration',
+            'Changes',
+            'Errors'
+        ];
+
+        let csv = headers.join(',') + '\n';
+
+        logs.forEach(log => {
+            const actionText = log.action ||
+                              (log.module ? `Reload ${log.module}` : null) ||
+                              log.moduleDescription ||
+                              'Unknown Action';
+
+            const row = [
+                `"${log.timestamp || ''}"`,
+                `"${log.date || ''}"`,
+                `"${log.time || ''}"`,
+                `"${log.type || 'info'}"`,
+                `"${actionText}"`,
+                `"${log.user?.username || 'System'}"`,
+                `"${log.guild?.name || 'Unknown'}"`,
+                `"${log.success ? 'Yes' : 'No'}"`,
+                `"${log.duration || 'N/A'}"`,
+                `"${(log.changes || []).join('; ')}"`,
+                `"${(log.errors || []).map(e => e.message || e).join('; ')}"`
+            ];
+
+            csv += row.join(',') + '\n';
+        });
+
+        return csv;
+    },
+
+    /**
+     * Genera exportación en formato TXT
+     */
+    generateTXTExport(logs, stats) {
+        let txt = '='.repeat(60) + '\n';
+        txt += '           SUPERKODE BOT - RELOAD LOGS EXPORT\n';
+        txt += '='.repeat(60) + '\n\n';
+
+        txt += `Export Date: ${new Date().toLocaleString('es-ES')}\n`;
+        txt += `Total Logs: ${logs.length}\n`;
+        txt += `Success Rate: ${stats.successRate}%\n`;
+        txt += `Average Duration: ${stats.averageDuration}ms\n\n`;
+
+        txt += '-'.repeat(60) + '\n';
+        txt += '                        LOG ENTRIES\n';
+        txt += '-'.repeat(60) + '\n\n';
+
+        logs.forEach((log, index) => {
+            const actionText = log.action ||
+                              (log.module ? `Reload ${log.module}` : null) ||
+                              log.moduleDescription ||
+                              'Unknown Action';
+
+            txt += `[${index + 1}] ${log.date} ${log.time}\n`;
+            txt += `    Action: ${actionText}\n`;
+            txt += `    User: ${log.user?.username || 'System'}\n`;
+            txt += `    Guild: ${log.guild?.name || 'Unknown'}\n`;
+            txt += `    Status: ${log.success ? 'SUCCESS' : 'FAILED'}\n`;
+            txt += `    Duration: ${log.duration ? `${log.duration}ms` : 'N/A'}\n`;
+
+            if (log.changes && log.changes.length > 0) {
+                txt += `    Changes:\n`;
+                log.changes.forEach(change => {
+                    txt += `      - ${change}\n`;
+                });
+            }
+
+            if (log.errors && log.errors.length > 0) {
+                txt += `    Errors:\n`;
+                log.errors.forEach(error => {
+                    txt += `      - ${error.message || error}\n`;
+                });
+            }
+
+            txt += '\n';
+        });
+
+        return txt;
+    },
+
+    /**
+     * Genera exportación en formato Markdown
+     */
+    generateMDExport(logs, stats) {
+        let md = '# SuperKode Bot - Reload Logs Export\n\n';
+
+        md += `**Export Date:** ${new Date().toLocaleString('es-ES')}  \n`;
+        md += `**Total Logs:** ${logs.length}  \n`;
+        md += `**Success Rate:** ${stats.successRate}%  \n`;
+        md += `**Average Duration:** ${stats.averageDuration}ms  \n\n`;
+
+        md += '## 📊 Statistics\n\n';
+        md += '| Metric | Value |\n';
+        md += '|--------|-------|\n';
+        md += `| Total Logs | ${stats.total} |\n`;
+        md += `| Today | ${stats.today} |\n`;
+        md += `| This Week | ${stats.thisWeek} |\n`;
+        md += `| Success Rate | ${stats.successRate}% |\n`;
+        md += `| Average Duration | ${stats.averageDuration}ms |\n\n`;
+
+        md += '## 📋 Log Entries\n\n';
+
+        logs.forEach((log, index) => {
+            const actionText = log.action ||
+                              (log.module ? `Reload ${log.module}` : null) ||
+                              log.moduleDescription ||
+                              'Unknown Action';
+
+            const statusIcon = log.success ? '✅' : '❌';
+
+            md += `### ${statusIcon} Log #${index + 1} - ${actionText}\n\n`;
+            md += `**Date:** ${log.date} ${log.time}  \n`;
+            md += `**User:** ${log.user?.username || 'System'}  \n`;
+            md += `**Guild:** ${log.guild?.name || 'Unknown'}  \n`;
+            md += `**Status:** ${log.success ? 'SUCCESS' : 'FAILED'}  \n`;
+            md += `**Duration:** ${log.duration ? `${log.duration}ms` : 'N/A'}  \n\n`;
+
+            if (log.changes && log.changes.length > 0) {
+                md += '**Changes:**\n';
+                log.changes.forEach(change => {
+                    md += `- ${change}\n`;
+                });
+                md += '\n';
+            }
+
+            if (log.errors && log.errors.length > 0) {
+                md += '**Errors:**\n';
+                log.errors.forEach(error => {
+                    md += `- ${error.message || error}\n`;
+                });
+                md += '\n';
+            }
+
+            md += '---\n\n';
+        });
+
+        return md;
     }
 };
