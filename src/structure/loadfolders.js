@@ -1,5 +1,9 @@
+require('colors');
 const fs = require('fs');
 const path = require('path');
+const { isOwner } = require('./config/configowner/owner');
+const dbManager = require('./databases/database');
+const { loadSlashCommands } = require('./commands/loadCommands');
 require('dotenv').config({ path: path.join(__dirname, 'config', 'configbot', '.env') });
 
 /**
@@ -29,7 +33,12 @@ function loadConfig() {
             process.exit(1);
         }
 
-        console.log('[CONFIG] Configuración cargada exitosamente desde .env');
+        console.log('✅ Configuración cargada desde archivo .env'.green);
+
+        // Agregar función helper para verificar owners usando el módulo externo
+        config.isOwner = function(userId) {
+            return isOwner(userId, config.clientId);
+        };
 
         return config;
     } catch (error) {
@@ -47,40 +56,39 @@ function loadCommands(client) {
     const commandsPath = path.join(__dirname, '..', 'commands');
 
     if (!fs.existsSync(commandsPath)) {
-        console.log('[ADVERTENCIA] La carpeta de comandos no existe:', commandsPath);
+        console.warn(`⚠️ Carpeta de comandos no encontrada: ${commandsPath}`);
         return;
     }
 
-    console.log(`[CARGA] Explorando carpeta de comandos: ${commandsPath}`);
     const commandFolders = fs.readdirSync(commandsPath);
-    console.log(`[CARGA] Carpetas encontradas: ${commandFolders.join(', ')}`);
 
     for (const folder of commandFolders) {
         const folderPath = path.join(commandsPath, folder);
         if (fs.statSync(folderPath).isDirectory()) {
-            console.log(`[CARGA] Procesando carpeta: ${folder}`);
             const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
-            console.log(`[CARGA] Archivos .js encontrados en ${folder}: ${commandFiles.length > 0 ? commandFiles.join(', ') : 'ninguno'}`);
 
             for (const file of commandFiles) {
                 const filePath = path.join(folderPath, file);
-                console.log(`[CARGA] Intentando cargar archivo: ${filePath}`);
 
                 try {
+                    // Limpiar cache antes de requerir
+                    delete require.cache[require.resolve(filePath)];
                     const command = require(filePath);
+
+                    // Agregar información del archivo al comando
+                    command._fileName = `${folder}/${file}`;
+                    command._category = folder;
 
                     if ('data' in command && 'execute' in command) {
                         client.commands.set(command.data.name, command);
-                        console.log(`[COMANDO] ✅ Cargado exitosamente: ${command.data.name} desde ${folder}/${file}`);
+                        console.log(`✅ Comando cargado: ${command.data.name} (${command._fileName})`.green);
                     } else {
-                        console.log(`[ADVERTENCIA] ⚠️ El comando en ${folder}/${file} no tiene las propiedades requeridas "data" o "execute".`);
+                        console.warn(`⚠️ Estructura de comando inválida en ${command._fileName}`.yellow);
                     }
                 } catch (error) {
-                    console.error(`[ERROR] ❌ Error al cargar comando ${folder}/${file}:`, error.message);
+                    console.error(`❌ Error al cargar comando ${folder}/${file}: ${error.message}`.red);
                 }
             }
-        } else {
-            console.log(`[CARGA] Omitiendo archivo (no es carpeta): ${folder}`);
         }
     }
 }
@@ -93,35 +101,37 @@ function loadEvents(client) {
     const eventsPath = path.join(__dirname, 'events');
 
     if (!fs.existsSync(eventsPath)) {
-        console.log('[ADVERTENCIA] La carpeta de eventos no existe:', eventsPath);
+        console.warn(`⚠️ Carpeta de eventos no encontrada: ${eventsPath}`);
         return;
     }
 
-    console.log(`[CARGA] Explorando carpeta de eventos: ${eventsPath}`);
     const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-    console.log(`[CARGA] Archivos de eventos encontrados: ${eventFiles.length > 0 ? eventFiles.join(', ') : 'ninguno'}`);
 
     for (const file of eventFiles) {
         const filePath = path.join(eventsPath, file);
-        console.log(`[CARGA] Intentando cargar evento: ${filePath}`);
 
         try {
+            // Limpiar cache antes de requerir
+            delete require.cache[require.resolve(filePath)];
             const event = require(filePath);
 
+            // Agregar información del archivo al evento
+            event._fileName = file;
+
             if (!event.name || !event.execute) {
-                console.log(`[ADVERTENCIA] ⚠️ El evento en ${file} no tiene las propiedades requeridas "name" o "execute".`);
+                console.warn(`⚠️ Estructura de evento inválida en ${event._fileName}`.yellow);
                 continue;
             }
 
             if (event.once) {
                 client.once(event.name, (...args) => event.execute(...args));
-                console.log(`[EVENTO] ✅ Cargado exitosamente (once): ${event.name} desde ${file}`);
+                console.log(`✅ Evento cargado: ${event.name} (${event._fileName}) [once]`.green);
             } else {
                 client.on(event.name, (...args) => event.execute(...args));
-                console.log(`[EVENTO] ✅ Cargado exitosamente (on): ${event.name} desde ${file}`);
+                console.log(`✅ Evento cargado: ${event.name} (${event._fileName}) [on]`.green);
             }
         } catch (error) {
-            console.error(`[ERROR] ❌ Error al cargar evento ${file}:`, error.message);
+            console.error(`❌ Error al cargar evento ${file}: ${error.message}`.red);
         }
     }
 }
@@ -134,29 +144,121 @@ function loadHandlers(client) {
     const handlersPath = path.join(__dirname, 'handlers');
 
     if (!fs.existsSync(handlersPath)) {
-        console.log('[ADVERTENCIA] La carpeta de handlers no existe:', handlersPath);
+        console.warn(`⚠️ Carpeta de handlers no encontrada: ${handlersPath}`);
         return;
     }
 
-    console.log(`[CARGA] Explorando carpeta de handlers: ${handlersPath}`);
     const handlerFiles = fs.readdirSync(handlersPath).filter(file => file.endsWith('.js'));
-    console.log(`[CARGA] Archivos de handlers encontrados: ${handlerFiles.length > 0 ? handlerFiles.join(', ') : 'ninguno'}`);
 
     for (const file of handlerFiles) {
         const filePath = path.join(handlersPath, file);
-        console.log(`[CARGA] Intentando cargar handler: ${filePath}`);
 
         try {
+            // Limpiar cache antes de requerir
+            delete require.cache[require.resolve(filePath)];
             const handler = require(filePath);
 
             if (typeof handler === 'function') {
                 handler(client);
-                console.log(`[HANDLER] ✅ Cargado exitosamente: ${file}`);
+                console.log(`✅ Handler cargado: ${file.replace('.js', '')} (${file})`.green);
             } else {
-                console.log(`[ADVERTENCIA] ⚠️ El handler en ${file} no es una función válida.`);
+                console.warn(`⚠️ Estructura de handler inválida en ${file}`.yellow);
             }
         } catch (error) {
-            console.error(`[ERROR] ❌ Error al cargar handler ${file}:`, error.message);
+            console.error(`❌ Error al cargar handler ${file}: ${error.message}`.red);
+        }
+    }
+}
+
+/**
+ * Función para cargar comandos desde structure/commands
+ * @param {Client} client - Cliente de Discord
+ */
+function loadStructureCommands(client) {
+    const structureCommandsPath = path.join(__dirname, 'commands');
+
+    if (!fs.existsSync(structureCommandsPath)) {
+        console.warn(`⚠️ Carpeta de comandos de estructura no encontrada: ${structureCommandsPath}`.yellow);
+        return;
+    }
+
+    console.log(`✅ Cargador de comandos de estructura disponible: loadCommands.js`.green);
+
+    // Usar la función loadSlashCommands del módulo commands
+    try {
+        loadSlashCommands(client);
+        console.log(`✅ Sistema de comandos de estructura inicializado`.green);
+    } catch (error) {
+        console.error(`❌ Error al inicializar sistema de comandos de estructura: ${error.message}`.red);
+    }
+}
+
+/**
+ * Función para cargar y configurar las bases de datos
+ * @param {Client} client - Cliente de Discord
+ */
+function loadDatabases(client) {
+    const databasesPath = path.join(__dirname, 'databases');
+
+    if (!fs.existsSync(databasesPath)) {
+        console.warn(`⚠️ Carpeta de bases de datos no encontrada: ${databasesPath}`);
+        return;
+    }
+
+    // Verificar que el administrador de bases de datos esté disponible
+    if (dbManager) {
+        // Listar bases de datos existentes
+        const existingDatabases = dbManager.listDatabases();
+        if (existingDatabases.length > 0) {
+            existingDatabases.forEach(dbName => {
+                const recordCount = dbManager.countRecords(dbName);
+                console.log(`✅ Base de datos cargada: ${dbName} (${dbName}.json) [${recordCount} registros]`.green);
+            });
+        }
+
+        // Crear bases de datos por defecto si no existen
+        const defaultDatabases = [
+            { name: 'databasereload', defaultData: [] }
+            // Puedes agregar más bases de datos por defecto aquí
+        ];
+
+        defaultDatabases.forEach(({ name, defaultData }) => {
+            const created = dbManager.createDatabase(name, defaultData);
+            if (created) {
+                console.log(`✅ Base de datos por defecto creada: ${name} (${name}.json)`.green);
+            }
+        });
+
+        // Agregar el administrador de bases de datos al cliente para acceso global
+        client.dbManager = dbManager;
+
+    } else {
+        console.error('❌ Error al cargar el administrador de bases de datos');
+    }
+
+    // Buscar archivos .js adicionales en la carpeta databases (excluyendo database.js)
+    const databaseFiles = fs.readdirSync(databasesPath).filter(file =>
+        file.endsWith('.js') && file !== 'database.js'
+    );
+
+    for (const file of databaseFiles) {
+        const filePath = path.join(databasesPath, file);
+
+        try {
+            // Limpiar cache antes de requerir
+            delete require.cache[require.resolve(filePath)];
+            const dbConfig = require(filePath);
+
+            if (typeof dbConfig === 'function') {
+                dbConfig(client, dbManager);
+                console.log(`✅ Configuración de BD cargada: ${file.replace('.js', '')} (${file})`.green);
+            } else if (typeof dbConfig === 'object') {
+                console.log(`✅ Objeto de BD cargado: ${file.replace('.js', '')} (${file})`.green);
+            } else {
+                console.warn(`⚠️ Estructura de configuración de BD inválida en ${file}`.yellow);
+            }
+        } catch (error) {
+            console.error(`❌ Error al cargar configuración de BD ${file}: ${error.message}`.red);
         }
     }
 }
@@ -167,17 +269,19 @@ function loadHandlers(client) {
  * @returns {Object} Configuración del bot
  */
 function loadAll(client) {
-    console.log('📂 Cargando componentes del bot...');
+    console.log('🚀 Cargando componentes del bot...'.cyan);
 
     // Cargar configuración primero
     const config = loadConfig();
 
     // Cargar componentes del bot
     loadCommands(client);
+    loadStructureCommands(client);
     loadEvents(client);
     loadHandlers(client);
+    loadDatabases(client);
 
-    console.log('✅ Todos los componentes han sido cargados');
+    console.log('✅ Todos los componentes cargados exitosamente'.green);
 
     return config;
 }
@@ -185,7 +289,9 @@ function loadAll(client) {
 module.exports = {
     loadConfig,
     loadCommands,
+    loadStructureCommands,
     loadEvents,
     loadHandlers,
+    loadDatabases,
     loadAll
 };
