@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionResponseFlags } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { loadConfig } = require('../../structure/loadfolders');
 const dbManager = require('../../structure/databases/database');
 
@@ -65,7 +65,7 @@ module.exports = {
         if (!config.isOwner(interaction.user.id)) {
             return interaction.reply({
                 content: "❌ **Acceso Denegado**\nSolo los propietarios del bot pueden usar este comando.",
-                flags: InteractionResponseFlags.Ephemeral
+                flags: MessageFlags.Ephemeral
             });
         }
 
@@ -87,7 +87,7 @@ module.exports = {
             default:
                 await interaction.reply({
                     content: '❌ Subcomando no reconocido.',
-                    flags: InteractionResponseFlags.Ephemeral
+                    flags: MessageFlags.Ephemeral
                 });
         }
     },
@@ -126,7 +126,7 @@ module.exports = {
         await interaction.reply({
             embeds: [confirmEmbed],
             components: [row],
-            flags: InteractionResponseFlags.Ephemeral
+            flags: MessageFlags.Ephemeral
         });
 
         // Registrar callbacks de botones
@@ -157,7 +157,7 @@ module.exports = {
     async handleSelectiveReload(interaction) {
         const tipo = interaction.options.getString('tipo');
 
-        await interaction.deferReply({ flags: InteractionResponseFlags.Ephemeral });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         let options = [];
         let actionId = '';
@@ -206,7 +206,7 @@ module.exports = {
      * Maneja la verificación de estado
      */
     async handleStatusCheck(interaction) {
-        await interaction.deferReply({ flags: InteractionResponseFlags.Ephemeral });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const stats = {
             commands: interaction.client.commands.size,
@@ -238,7 +238,7 @@ module.exports = {
      * Maneja la visualización de logs
      */
     async handleLogsView(interaction) {
-        await interaction.deferReply({ flags: InteractionResponseFlags.Ephemeral });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const cantidad = interaction.options.getInteger('cantidad') || 10;
         const tipo = interaction.options.getString('tipo');
