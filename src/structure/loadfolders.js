@@ -45,35 +45,42 @@ function loadConfig() {
  */
 function loadCommands(client) {
     const commandsPath = path.join(__dirname, '..', 'commands');
-    
+
     if (!fs.existsSync(commandsPath)) {
         console.log('[ADVERTENCIA] La carpeta de comandos no existe:', commandsPath);
         return;
     }
-    
+
+    console.log(`[CARGA] Explorando carpeta de comandos: ${commandsPath}`);
     const commandFolders = fs.readdirSync(commandsPath);
+    console.log(`[CARGA] Carpetas encontradas: ${commandFolders.join(', ')}`);
 
     for (const folder of commandFolders) {
         const folderPath = path.join(commandsPath, folder);
         if (fs.statSync(folderPath).isDirectory()) {
+            console.log(`[CARGA] Procesando carpeta: ${folder}`);
             const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
-            
+            console.log(`[CARGA] Archivos .js encontrados en ${folder}: ${commandFiles.length > 0 ? commandFiles.join(', ') : 'ninguno'}`);
+
             for (const file of commandFiles) {
                 const filePath = path.join(folderPath, file);
-                
+                console.log(`[CARGA] Intentando cargar archivo: ${filePath}`);
+
                 try {
                     const command = require(filePath);
-                    
+
                     if ('data' in command && 'execute' in command) {
                         client.commands.set(command.data.name, command);
-                        console.log(`[COMANDO] Cargado: ${command.data.name} desde ${folder}/${file}`);
+                        console.log(`[COMANDO] ✅ Cargado exitosamente: ${command.data.name} desde ${folder}/${file}`);
                     } else {
-                        console.log(`[ADVERTENCIA] El comando en ${filePath} no tiene las propiedades requeridas "data" o "execute".`);
+                        console.log(`[ADVERTENCIA] ⚠️ El comando en ${folder}/${file} no tiene las propiedades requeridas "data" o "execute".`);
                     }
                 } catch (error) {
-                    console.error(`[ERROR] Error al cargar comando ${filePath}:`, error.message);
+                    console.error(`[ERROR] ❌ Error al cargar comando ${folder}/${file}:`, error.message);
                 }
             }
+        } else {
+            console.log(`[CARGA] Omitiendo archivo (no es carpeta): ${folder}`);
         }
     }
 }
@@ -84,34 +91,37 @@ function loadCommands(client) {
  */
 function loadEvents(client) {
     const eventsPath = path.join(__dirname, 'events');
-    
+
     if (!fs.existsSync(eventsPath)) {
         console.log('[ADVERTENCIA] La carpeta de eventos no existe:', eventsPath);
         return;
     }
-    
+
+    console.log(`[CARGA] Explorando carpeta de eventos: ${eventsPath}`);
     const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-    
+    console.log(`[CARGA] Archivos de eventos encontrados: ${eventFiles.length > 0 ? eventFiles.join(', ') : 'ninguno'}`);
+
     for (const file of eventFiles) {
         const filePath = path.join(eventsPath, file);
-        
+        console.log(`[CARGA] Intentando cargar evento: ${filePath}`);
+
         try {
             const event = require(filePath);
-            
+
             if (!event.name || !event.execute) {
-                console.log(`[ADVERTENCIA] El evento en ${filePath} no tiene las propiedades requeridas "name" o "execute".`);
+                console.log(`[ADVERTENCIA] ⚠️ El evento en ${file} no tiene las propiedades requeridas "name" o "execute".`);
                 continue;
             }
-            
+
             if (event.once) {
                 client.once(event.name, (...args) => event.execute(...args));
+                console.log(`[EVENTO] ✅ Cargado exitosamente (once): ${event.name} desde ${file}`);
             } else {
                 client.on(event.name, (...args) => event.execute(...args));
+                console.log(`[EVENTO] ✅ Cargado exitosamente (on): ${event.name} desde ${file}`);
             }
-            
-            console.log(`[EVENTO] Cargado: ${event.name} desde ${file}`);
         } catch (error) {
-            console.error(`[ERROR] Error al cargar evento ${filePath}:`, error.message);
+            console.error(`[ERROR] ❌ Error al cargar evento ${file}:`, error.message);
         }
     }
 }
@@ -122,28 +132,31 @@ function loadEvents(client) {
  */
 function loadHandlers(client) {
     const handlersPath = path.join(__dirname, 'handlers');
-    
+
     if (!fs.existsSync(handlersPath)) {
         console.log('[ADVERTENCIA] La carpeta de handlers no existe:', handlersPath);
         return;
     }
-    
+
+    console.log(`[CARGA] Explorando carpeta de handlers: ${handlersPath}`);
     const handlerFiles = fs.readdirSync(handlersPath).filter(file => file.endsWith('.js'));
-    
+    console.log(`[CARGA] Archivos de handlers encontrados: ${handlerFiles.length > 0 ? handlerFiles.join(', ') : 'ninguno'}`);
+
     for (const file of handlerFiles) {
         const filePath = path.join(handlersPath, file);
-        
+        console.log(`[CARGA] Intentando cargar handler: ${filePath}`);
+
         try {
             const handler = require(filePath);
-            
+
             if (typeof handler === 'function') {
                 handler(client);
-                console.log(`[HANDLER] Cargado: ${file}`);
+                console.log(`[HANDLER] ✅ Cargado exitosamente: ${file}`);
             } else {
-                console.log(`[ADVERTENCIA] El handler en ${filePath} no es una función válida.`);
+                console.log(`[ADVERTENCIA] ⚠️ El handler en ${file} no es una función válida.`);
             }
         } catch (error) {
-            console.error(`[ERROR] Error al cargar handler ${filePath}:`, error.message);
+            console.error(`[ERROR] ❌ Error al cargar handler ${file}:`, error.message);
         }
     }
 }
