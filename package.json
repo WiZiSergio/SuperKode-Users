@@ -5,13 +5,28 @@
   "main": "spu.js",
   "scripts": {
     "start": "node spu.js",
-    "dev": "node spu.js"
+    "dev": "node spu.js",
+    "test": "node --test"
   },
   "dependencies": {
+    "colors": "^1.4.0",
     "discord.js": "^14.21.0",
     "dotenv": "^17.2.0"
   },
-  "keywords": ["discord", "bot", "superkode"],
+  "keywords": [
+    "discord",
+    "bot",
+    "superkode",
+    "javascript",
+    "nodejs"
+  ],
   "author": "WiZiSergio",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WiZiSergio/SuperKode-Users"
+  }
 }
