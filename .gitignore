@@ -10,6 +10,10 @@ src/structure/config/configbot/.env
 # Database files
 src/structure/databases/bases/*.json
 
+# Temporary export files
+temp/
+*.tmp
+
 # Logs
 logs/
 *.log
