@@ -11,9 +11,7 @@ function loadConfig() {
         // Cargar configuración desde variables de entorno
         const config = {
             token: process.env.DISCORD_TOKEN,
-            clientId: process.env.DISCORD_CLIENT_ID,
-            environment: process.env.NODE_ENV || 'development',
-            logLevel: process.env.LOG_LEVEL || 'info'
+            clientId: process.env.DISCORD_CLIENT_ID
         };
 
         // Validar que las variables requeridas estén configuradas
@@ -32,8 +30,6 @@ function loadConfig() {
         }
 
         console.log('[CONFIG] Configuración cargada exitosamente desde .env');
-        console.log(`[CONFIG] Entorno: ${config.environment}`);
-        console.log(`[CONFIG] Nivel de logs: ${config.logLevel}`);
 
         return config;
     } catch (error) {
