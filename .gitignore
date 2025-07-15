@@ -7,6 +7,9 @@ node_modules/
 .env.production
 src/structure/config/configbot/.env
 
+# Database files
+src/structure/databases/bases/*.json
+
 # Logs
 logs/
 *.log
