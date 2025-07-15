@@ -1,4 +1,5 @@
 require('colors');
+const { InteractionResponseFlags } = require('discord.js');
 
 module.exports = {
     name: 'interactionCreate',
@@ -11,7 +12,7 @@ module.exports = {
                 console.error(`❌ No se encontró el comando ${interaction.commandName}`.red);
                 return interaction.reply({
                     content: '❌ Este comando no existe o no está disponible.',
-                    ephemeral: true
+                    flags: InteractionResponseFlags.Ephemeral
                 });
             }
 
@@ -23,7 +24,7 @@ module.exports = {
 
                 const errorMessage = {
                     content: '❌ Hubo un error al ejecutar este comando.',
-                    ephemeral: true
+                    flags: InteractionResponseFlags.Ephemeral
                 };
 
                 if (interaction.replied || interaction.deferred) {
@@ -44,7 +45,7 @@ module.exports = {
             if (!executed) {
                 return interaction.reply({
                     content: '⏰ Esta interacción ha expirado o no es válida.',
-                    ephemeral: true
+                    flags: InteractionResponseFlags.Ephemeral
                 });
             }
         }
