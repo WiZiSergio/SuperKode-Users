@@ -19,8 +19,6 @@ npm install discord.js dotenv
 ```env
 DISCORD_TOKEN=tu_token_real_aqui
 DISCORD_CLIENT_ID=tu_client_id_aqui
-NODE_ENV=development
-LOG_LEVEL=info
 ```
 
 **¿Cómo obtener estos valores?**
