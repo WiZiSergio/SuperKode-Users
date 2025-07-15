@@ -107,13 +107,13 @@ module.exports = function(client) {
      */
     client.getRecentLogs = function(database, limit = 10, type = null) {
         try {
-            const logs = dbManager.getRecords(database) || [];
-            
+            const logs = dbManager.getAllRecords(database) || [];
+
             let filteredLogs = logs;
             if (type) {
                 filteredLogs = logs.filter(log => log.type === type);
             }
-            
+
             return filteredLogs
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
                 .slice(0, limit);
@@ -130,7 +130,7 @@ module.exports = function(client) {
      */
     client.getLogStats = function(database) {
         try {
-            const logs = dbManager.getRecords(database) || [];
+            const logs = dbManager.getAllRecords(database) || [];
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const thisWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -192,7 +192,7 @@ module.exports = function(client) {
      */
     client.cleanOldLogs = function(database, daysToKeep = 30) {
         try {
-            const logs = dbManager.getRecords(database) || [];
+            const logs = dbManager.getAllRecords(database) || [];
             const cutoffDate = new Date(Date.now() - daysToKeep * 24 * 60 * 60 * 1000);
             
             const recentLogs = logs.filter(log => new Date(log.timestamp) >= cutoffDate);
