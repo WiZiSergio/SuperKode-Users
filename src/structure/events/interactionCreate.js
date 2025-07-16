@@ -1,4 +1,4 @@
-require('colors');
+const chalk = require('chalk');
 const { MessageFlags } = require('discord.js');
 
 module.exports = {
@@ -9,7 +9,7 @@ module.exports = {
             const command = interaction.client.commands.get(interaction.commandName);
 
             if (!command) {
-                console.error(`❌ No se encontró el comando ${interaction.commandName}`.red);
+                console.error(chalk.red(`❌ No se encontró el comando ${interaction.commandName}`));
                 return interaction.reply({
                     content: '❌ Este comando no existe o no está disponible.',
                     flags: MessageFlags.Ephemeral
@@ -17,10 +17,10 @@ module.exports = {
             }
 
             try {
-                console.log(`🔧 Ejecutando comando: ${interaction.commandName} por ${interaction.user.username}`.cyan);
+                console.log(chalk.cyan(`🔧 Ejecutando comando: ${interaction.commandName} por ${interaction.user.username}`));
                 await command.execute(interaction);
             } catch (error) {
-                console.error(`❌ Error ejecutando comando ${interaction.commandName}:`.red, error);
+                console.error(chalk.red(`❌ Error ejecutando comando ${interaction.commandName}:`), error);
 
                 const errorMessage = {
                     content: '❌ Hubo un error al ejecutar este comando.',
@@ -37,7 +37,7 @@ module.exports = {
 
         // Manejar interacciones de botones
         else if (interaction.isButton()) {
-            console.log(`🔘 Botón presionado: ${interaction.customId} por ${interaction.user.username}`.yellow);
+            console.log(chalk.yellow(`🔘 Botón presionado: ${interaction.customId} por ${interaction.user.username}`));
 
             // Intentar ejecutar callback registrado
             const executed = interaction.client.executeButtonCallback(interaction.customId, interaction);
@@ -52,7 +52,7 @@ module.exports = {
 
         // Manejar select menus (para futuro uso)
         else if (interaction.isStringSelectMenu()) {
-            console.log(`📋 Select menu usado: ${interaction.customId} por ${interaction.user.username}`.magenta);
+            console.log(chalk.magenta(`📋 Select menu usado: ${interaction.customId} por ${interaction.user.username}`));
             // Lógica para select menus si es necesaria
         }
     }

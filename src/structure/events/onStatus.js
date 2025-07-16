@@ -1,4 +1,4 @@
-require('colors');
+const chalk = require('chalk');
 const { ActivityType } = require('discord.js');
 
 module.exports = {
@@ -27,9 +27,9 @@ module.exports = {
         const updateStatus = () => {
             const status = statuses[currentIndex];
             client.user.setActivity(status.name, { type: status.type });
-            
-            console.log(`🔄 Estado actualizado: ${status.name}`.cyan);
-            
+
+            console.log(chalk.cyan(`🔄 Estado actualizado: ${status.name}`));
+
             // Pasar al siguiente estado
             currentIndex = (currentIndex + 1) % statuses.length;
         };

@@ -1,4 +1,4 @@
-require('colors');
+const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
 const { isOwner } = require('./config/configowner/owner');
@@ -20,20 +20,20 @@ function loadConfig() {
 
         // Validar que las variables requeridas estén configuradas
         if (!config.token || config.token === 'TU_TOKEN_AQUI') {
-            console.error('❌ DISCORD_TOKEN no está configurado correctamente');
-            console.error('💡 Edita el archivo .env en src/structure/config/configbot/');
-            console.error('💡 Reemplaza "TU_TOKEN_AQUI" con tu token real de Discord');
+            console.error(chalk.red('❌ DISCORD_TOKEN no está configurado correctamente'));
+            console.error(chalk.yellow('💡 Edita el archivo .env en src/structure/config/configbot/'));
+            console.error(chalk.yellow('💡 Reemplaza "TU_TOKEN_AQUI" con tu token real de Discord'));
             process.exit(1);
         }
 
         if (!config.clientId || config.clientId === 'TU_CLIENT_ID_AQUI') {
-            console.error('❌ DISCORD_CLIENT_ID no está configurado correctamente');
-            console.error('💡 Edita el archivo .env en src/structure/config/configbot/');
-            console.error('💡 Reemplaza "TU_CLIENT_ID_AQUI" con tu Client ID real de Discord');
+            console.error(chalk.red('❌ DISCORD_CLIENT_ID no está configurado correctamente'));
+            console.error(chalk.yellow('💡 Edita el archivo .env en src/structure/config/configbot/'));
+            console.error(chalk.yellow('💡 Reemplaza "TU_CLIENT_ID_AQUI" con tu Client ID real de Discord'));
             process.exit(1);
         }
 
-        console.log('✅ Configuración cargada desde archivo .env'.green);
+        console.log(chalk.green('✅ Configuración cargada desde archivo .env'));
 
         // Agregar función helper para verificar owners usando el módulo externo
         config.isOwner = function(userId) {
@@ -42,8 +42,8 @@ function loadConfig() {
 
         return config;
     } catch (error) {
-        console.error('❌ Error al cargar configuración:', error.message);
-        console.error('💡 Asegúrate de que el archivo .env existe en src/structure/config/configbot/');
+        console.error(chalk.red('❌ Error al cargar configuración:'), error.message);
+        console.error(chalk.yellow('💡 Asegúrate de que el archivo .env existe en src/structure/config/configbot/'));
         process.exit(1);
     }
 }
@@ -56,7 +56,7 @@ function loadCommands(client) {
     const commandsPath = path.join(__dirname, '..', 'commands');
 
     if (!fs.existsSync(commandsPath)) {
-        console.warn(`⚠️ Carpeta de comandos no encontrada: ${commandsPath}`);
+        console.warn(chalk.yellow(`⚠️ Carpeta de comandos no encontrada: ${commandsPath}`));
         return;
     }
 
@@ -81,12 +81,12 @@ function loadCommands(client) {
 
                     if ('data' in command && 'execute' in command) {
                         client.commands.set(command.data.name, command);
-                        console.log(`✅ Comando cargado: ${command.data.name} (${command._fileName})`.green);
+                        console.log(chalk.green(`✅ Comando cargado: ${command.data.name} (${command._fileName})`));
                     } else {
-                        console.warn(`⚠️ Estructura de comando inválida en ${command._fileName}`.yellow);
+                        console.warn(chalk.yellow(`⚠️ Estructura de comando inválida en ${command._fileName}`));
                     }
                 } catch (error) {
-                    console.error(`❌ Error al cargar comando ${folder}/${file}: ${error.message}`.red);
+                    console.error(chalk.red(`❌ Error al cargar comando ${folder}/${file}: ${error.message}`));
                 }
             }
         }
@@ -101,7 +101,7 @@ function loadEvents(client) {
     const eventsPath = path.join(__dirname, 'events');
 
     if (!fs.existsSync(eventsPath)) {
-        console.warn(`⚠️ Carpeta de eventos no encontrada: ${eventsPath}`);
+        console.warn(chalk.yellow(`⚠️ Carpeta de eventos no encontrada: ${eventsPath}`));
         return;
     }
 
@@ -119,19 +119,19 @@ function loadEvents(client) {
             event._fileName = file;
 
             if (!event.name || !event.execute) {
-                console.warn(`⚠️ Estructura de evento inválida en ${event._fileName}`.yellow);
+                console.warn(chalk.yellow(`⚠️ Estructura de evento inválida en ${event._fileName}`));
                 continue;
             }
 
             if (event.once) {
                 client.once(event.name, (...args) => event.execute(...args));
-                console.log(`✅ Evento cargado: ${event.name} (${event._fileName}) [once]`.green);
+                console.log(chalk.green(`✅ Evento cargado: ${event.name} (${event._fileName}) [once]`));
             } else {
                 client.on(event.name, (...args) => event.execute(...args));
-                console.log(`✅ Evento cargado: ${event.name} (${event._fileName}) [on]`.green);
+                console.log(chalk.green(`✅ Evento cargado: ${event.name} (${event._fileName}) [on]`));
             }
         } catch (error) {
-            console.error(`❌ Error al cargar evento ${file}: ${error.message}`.red);
+            console.error(chalk.red(`❌ Error al cargar evento ${file}: ${error.message}`));
         }
     }
 }
@@ -144,7 +144,7 @@ function loadHandlers(client) {
     const handlersPath = path.join(__dirname, 'handlers');
 
     if (!fs.existsSync(handlersPath)) {
-        console.warn(`⚠️ Carpeta de handlers no encontrada: ${handlersPath}`);
+        console.warn(chalk.yellow(`⚠️ Carpeta de handlers no encontrada: ${handlersPath}`));
         return;
     }
 
@@ -160,12 +160,12 @@ function loadHandlers(client) {
 
             if (typeof handler === 'function') {
                 handler(client);
-                console.log(`✅ Handler cargado: ${file.replace('.js', '')} (${file})`.green);
+                console.log(chalk.green(`✅ Handler cargado: ${file.replace('.js', '')} (${file})`));
             } else {
-                console.warn(`⚠️ Estructura de handler inválida en ${file}`.yellow);
+                console.warn(chalk.yellow(`⚠️ Estructura de handler inválida en ${file}`));
             }
         } catch (error) {
-            console.error(`❌ Error al cargar handler ${file}: ${error.message}`.red);
+            console.error(chalk.red(`❌ Error al cargar handler ${file}: ${error.message}`));
         }
     }
 }
@@ -178,18 +178,18 @@ function loadStructureCommands(client) {
     const structureCommandsPath = path.join(__dirname, 'commands');
 
     if (!fs.existsSync(structureCommandsPath)) {
-        console.warn(`⚠️ Carpeta de comandos de estructura no encontrada: ${structureCommandsPath}`.yellow);
+        console.warn(chalk.yellow(`⚠️ Carpeta de comandos de estructura no encontrada: ${structureCommandsPath}`));
         return;
     }
 
-    console.log(`✅ Cargador de comandos de estructura disponible: loadCommands.js`.green);
+    console.log(chalk.green(`✅ Cargador de comandos de estructura disponible: loadCommands.js`));
 
     // Usar la función loadSlashCommands del módulo commands
     try {
         loadSlashCommands(client);
-        console.log(`✅ Sistema de comandos de estructura inicializado`.green);
+        console.log(chalk.green(`✅ Sistema de comandos de estructura inicializado`));
     } catch (error) {
-        console.error(`❌ Error al inicializar sistema de comandos de estructura: ${error.message}`.red);
+        console.error(chalk.red(`❌ Error al inicializar sistema de comandos de estructura: ${error.message}`));
     }
 }
 
@@ -201,7 +201,7 @@ function loadDatabases(client) {
     const databasesPath = path.join(__dirname, 'databases');
 
     if (!fs.existsSync(databasesPath)) {
-        console.warn(`⚠️ Carpeta de bases de datos no encontrada: ${databasesPath}`);
+        console.warn(chalk.yellow(`⚠️ Carpeta de bases de datos no encontrada: ${databasesPath}`));
         return;
     }
 
@@ -212,7 +212,7 @@ function loadDatabases(client) {
         if (existingDatabases.length > 0) {
             existingDatabases.forEach(dbName => {
                 const recordCount = dbManager.countRecords(dbName);
-                console.log(`✅ Base de datos cargada: ${dbName} (${dbName}.json) [${recordCount} registros]`.green);
+                console.log(chalk.green(`✅ Base de datos cargada: ${dbName} (${dbName}.json) [${recordCount} registros]`));
             });
         }
 
@@ -225,7 +225,7 @@ function loadDatabases(client) {
         defaultDatabases.forEach(({ name, defaultData }) => {
             const created = dbManager.createDatabase(name, defaultData);
             if (created) {
-                console.log(`✅ Base de datos por defecto creada: ${name} (${name}.json)`.green);
+                console.log(chalk.green(`✅ Base de datos por defecto creada: ${name} (${name}.json)`));
             }
         });
 
@@ -233,7 +233,7 @@ function loadDatabases(client) {
         client.dbManager = dbManager;
 
     } else {
-        console.error('❌ Error al cargar el administrador de bases de datos');
+        console.error(chalk.red('❌ Error al cargar el administrador de bases de datos'));
     }
 
     // Buscar archivos .js adicionales en la carpeta databases (excluyendo database.js)
@@ -251,14 +251,14 @@ function loadDatabases(client) {
 
             if (typeof dbConfig === 'function') {
                 dbConfig(client, dbManager);
-                console.log(`✅ Configuración de BD cargada: ${file.replace('.js', '')} (${file})`.green);
+                console.log(chalk.green(`✅ Configuración de BD cargada: ${file.replace('.js', '')} (${file})`));
             } else if (typeof dbConfig === 'object') {
-                console.log(`✅ Objeto de BD cargado: ${file.replace('.js', '')} (${file})`.green);
+                console.log(chalk.green(`✅ Objeto de BD cargado: ${file.replace('.js', '')} (${file})`));
             } else {
-                console.warn(`⚠️ Estructura de configuración de BD inválida en ${file}`.yellow);
+                console.warn(chalk.yellow(`⚠️ Estructura de configuración de BD inválida en ${file}`));
             }
         } catch (error) {
-            console.error(`❌ Error al cargar configuración de BD ${file}: ${error.message}`.red);
+            console.error(chalk.red(`❌ Error al cargar configuración de BD ${file}: ${error.message}`));
         }
     }
 }
@@ -269,7 +269,7 @@ function loadDatabases(client) {
  * @returns {Object} Configuración del bot
  */
 function loadAll(client) {
-    console.log('🚀 Cargando componentes del bot...'.cyan);
+    console.log(chalk.cyan('🚀 Cargando componentes del bot...'));
 
     // Cargar configuración primero
     const config = loadConfig();
@@ -281,7 +281,7 @@ function loadAll(client) {
     loadHandlers(client);
     loadDatabases(client);
 
-    console.log('✅ Todos los componentes cargados exitosamente'.green);
+    console.log(chalk.green('✅ Todos los componentes cargados exitosamente'));
 
     return config;
 }

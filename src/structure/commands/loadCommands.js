@@ -1,4 +1,4 @@
-require('colors');
+const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
 const { getGuildId, getGuildName, validateGuildConfig } = require('../config/configguild/guild');
@@ -11,7 +11,7 @@ function loadSlashCommands(client) {
     const commandsPath = path.join(__dirname, '..', '..', 'commands');
     
     if (!fs.existsSync(commandsPath)) {
-        console.warn(`⚠️ Carpeta de comandos no encontrada: ${commandsPath}`.yellow);
+        console.warn(chalk.yellow(`⚠️ Carpeta de comandos no encontrada: ${commandsPath}`));
         return;
     }
 
@@ -36,12 +36,12 @@ function loadSlashCommands(client) {
                     
                     if ('data' in command && 'execute' in command) {
                         client.commands.set(command.data.name, command);
-                        console.log(`✅ Comando cargado: ${command.data.name} (${command._fileName})`.green);
+                        console.log(chalk.green(`✅ Comando cargado: ${command.data.name} (${command._fileName})`));
                     } else {
-                        console.warn(`⚠️ Estructura de comando inválida en ${command._fileName}`.yellow);
+                        console.warn(chalk.yellow(`⚠️ Estructura de comando inválida en ${command._fileName}`));
                     }
                 } catch (error) {
-                    console.error(`❌ Error al cargar comando ${folder}/${file}: ${error.message}`.red);
+                    console.error(chalk.red(`❌ Error al cargar comando ${folder}/${file}: ${error.message}`));
                 }
             }
         }
@@ -59,7 +59,7 @@ async function registerSlashCommands(client) {
     }
 
     if (!client.application) {
-        console.warn('⚠️ Aplicación no disponible para registrar comandos'.yellow);
+        console.warn(chalk.yellow('⚠️ Aplicación no disponible para registrar comandos'));
         return;
     }
 
@@ -70,8 +70,8 @@ async function registerSlashCommands(client) {
         // Obtener el guild
         const guild = client.guilds.cache.get(guildId);
         if (!guild) {
-            console.error(`❌ Guild no encontrado: ${guildName} (${guildId})`.red);
-            console.error('💡 Asegúrate de que el bot esté en el servidor y el ID sea correcto'.yellow);
+            console.error(chalk.red(`❌ Guild no encontrado: ${guildName} (${guildId})`));
+            console.error(chalk.yellow('💡 Asegúrate de que el bot esté en el servidor y el ID sea correcto'));
             return;
         }
 
@@ -85,9 +85,9 @@ async function registerSlashCommands(client) {
 
         // Registrar comandos en el guild específico
         await guild.commands.set(commandsArray);
-        console.log(`(/) ${client.commands.size} comandos slash registrados en ${guildName} (${guildId})!`.green);
+        console.log(chalk.green(`(/) ${client.commands.size} comandos slash registrados en ${guildName} (${guildId})!`));
     } catch (error) {
-        console.error(`❌ Error al registrar comandos slash: ${error.message}`.red);
+        console.error(chalk.red(`❌ Error al registrar comandos slash: ${error.message}`));
     }
 }
 
@@ -96,7 +96,7 @@ async function registerSlashCommands(client) {
  * @param {Client} client - Cliente de Discord
  */
 async function reloadSlashCommands(client) {
-    console.log('🔄 Recargando comandos slash...'.cyan);
+    console.log(chalk.cyan('🔄 Recargando comandos slash...'));
 
     // Limpiar comandos existentes
     client.commands.clear();

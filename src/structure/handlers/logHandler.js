@@ -1,4 +1,4 @@
-require('colors');
+const chalk = require('chalk');
 const dbManager = require('../databases/database');
 
 /**
@@ -67,34 +67,34 @@ module.exports = function(client) {
             
             // Log en consola con colores
             const typeColors = {
-                info: 'cyan',
-                success: 'green',
-                warning: 'yellow',
-                error: 'red',
-                debug: 'gray'
+                info: chalk.cyan,
+                success: chalk.green,
+                warning: chalk.yellow,
+                error: chalk.red,
+                debug: chalk.gray
             };
-            
-            const color = typeColors[logEntry.type] || 'white';
-            console.log(`[${logEntry.time}] ${logEntry.type.toUpperCase()}: ${logEntry.action}`[color]);
-            
+
+            const colorFn = typeColors[logEntry.type] || chalk.white;
+            console.log(colorFn(`[${logEntry.time}] ${logEntry.type.toUpperCase()}: ${logEntry.action}`));
+
             if (logEntry.user) {
-                console.log(`  👤 Usuario: ${logEntry.user.username} (${logEntry.user.id})`.gray);
+                console.log(chalk.gray(`  👤 Usuario: ${logEntry.user.username} (${logEntry.user.id})`));
             }
-            
+
             if (logEntry.duration) {
-                console.log(`  ⏱️ Duración: ${logEntry.duration}ms`.gray);
+                console.log(chalk.gray(`  ⏱️ Duración: ${logEntry.duration}ms`));
             }
             
             if (logEntry.changes.length > 0) {
-                console.log(`  📋 Cambios: ${logEntry.changes.join(', ')}`.gray);
+                console.log(chalk.gray(`  📋 Cambios: ${logEntry.changes.join(', ')}`));
             }
             
             if (logEntry.errors.length > 0) {
-                console.log(`  🚨 Errores: ${logEntry.errors.length}`.red);
+                console.log(chalk.red(`  🚨 Errores: ${logEntry.errors.length}`));
             }
-            
+
         } catch (error) {
-            console.error('❌ Error guardando log:'.red, error);
+            console.error(chalk.red('❌ Error guardando log:'), error);
         }
     };
 
@@ -118,7 +118,7 @@ module.exports = function(client) {
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
                 .slice(0, limit);
         } catch (error) {
-            console.error('❌ Error obteniendo logs:'.red, error);
+            console.error(chalk.red('❌ Error obteniendo logs:'), error);
             return [];
         }
     };
@@ -171,7 +171,7 @@ module.exports = function(client) {
             
             return stats;
         } catch (error) {
-            console.error('❌ Error obteniendo estadísticas de logs:'.red, error);
+            console.error(chalk.red('❌ Error obteniendo estadísticas de logs:'), error);
             return {
                 total: 0,
                 today: 0,
@@ -200,12 +200,12 @@ module.exports = function(client) {
             
             if (removedCount > 0) {
                 dbManager.writeDatabase(database, recentLogs);
-                console.log(`🧹 Limpiados ${removedCount} logs antiguos de ${database}`.yellow);
+                console.log(chalk.yellow(`🧹 Limpiados ${removedCount} logs antiguos de ${database}`));
             }
-            
+
             return removedCount;
         } catch (error) {
-            console.error('❌ Error limpiando logs antiguos:'.red, error);
+            console.error(chalk.red('❌ Error limpiando logs antiguos:'), error);
             return 0;
         }
     };
@@ -224,5 +224,5 @@ module.exports = function(client) {
         client.cleanOldLogs('databasereload', 30);
     }, 24 * 60 * 60 * 1000);
     
-    console.log('✅ Handler de logs agregado al cliente'.green);
+    console.log(chalk.green('✅ Handler de logs agregado al cliente'));
 };

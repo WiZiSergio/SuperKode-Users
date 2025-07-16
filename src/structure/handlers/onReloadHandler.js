@@ -1,4 +1,4 @@
-require('colors');
+const chalk = require('chalk');
 const { loadCommands, loadStructureCommands, loadEvents, loadHandlers, loadDatabases } = require('../loadfolders');
 const { reloadSlashCommands } = require('../commands/loadCommands');
 
@@ -24,46 +24,46 @@ module.exports = function(client) {
      * Método para recargar eventos (para comando reload)
      */
     client.reloadEvents = async function() {
-        console.log('🔄 Recargando eventos...'.cyan);
-        
+        console.log(chalk.cyan('🔄 Recargando eventos...'));
+
         // Remover todos los listeners existentes excepto los básicos del sistema
         const systemEvents = ['error', 'warn', 'debug'];
         const currentListeners = this.eventNames();
-        
+
         currentListeners.forEach(eventName => {
             if (!systemEvents.includes(eventName)) {
                 this.removeAllListeners(eventName);
             }
         });
-        
+
         // Recargar eventos
         loadEvents(this);
-        
-        console.log('✅ Eventos recargados exitosamente'.green);
+
+        console.log(chalk.green('✅ Eventos recargados exitosamente'));
     };
 
     /**
      * Método para recargar handlers (para comando reload)
      */
     client.reloadHandlers = async function() {
-        console.log('🔄 Recargando handlers...'.cyan);
-        
+        console.log(chalk.cyan('🔄 Recargando handlers...'));
+
         // Recargar handlers
         loadHandlers(this);
-        
-        console.log('✅ Handlers recargados exitosamente'.green);
+
+        console.log(chalk.green('✅ Handlers recargados exitosamente'));
     };
 
     /**
      * Método para recargar bases de datos (para comando reload)
      */
     client.reloadDatabases = async function() {
-        console.log('🔄 Recargando bases de datos...'.cyan);
-        
+        console.log(chalk.cyan('🔄 Recargando bases de datos...'));
+
         // Recargar bases de datos
         loadDatabases(this);
-        
-        console.log('✅ Bases de datos recargadas exitosamente'.green);
+
+        console.log(chalk.green('✅ Bases de datos recargadas exitosamente'));
     };
 
     /**
@@ -78,15 +78,15 @@ module.exports = function(client) {
      * Método para recargar todos los componentes
      */
     client.reloadAll = async function() {
-        console.log('🔄 Recargando todos los componentes...'.cyan);
-        
+        console.log(chalk.cyan('🔄 Recargando todos los componentes...'));
+
         await this.reloadSlashCommands();
         await this.reloadEvents();
         await this.reloadHandlers();
         await this.reloadDatabases();
-        
-        console.log('✅ Todos los componentes recargados exitosamente'.green);
+
+        console.log(chalk.green('✅ Todos los componentes recargados exitosamente'));
     };
 
-    console.log('✅ Handler de recarga agregado al cliente'.green);
+    console.log(chalk.green('✅ Handler de recarga agregado al cliente'));
 };

@@ -1,4 +1,4 @@
-require('colors');
+const chalk = require('chalk');
 
 /**
  * Handler para manejar interacciones de botones
@@ -171,7 +171,7 @@ module.exports = function(client) {
                         });
                     }
                 } catch (error) {
-                    console.error('Error manejando timeout de botón:'.red, error);
+                    console.error(chalk.red('Error manejando timeout de botón:'), error);
                 }
                 resolve();
             }, timeout);
@@ -273,5 +273,5 @@ module.exports = function(client) {
         client.cleanExpiredButtonCallbacks();
     }, 5 * 60 * 1000);
 
-    console.log('✅ Handler de botones agregado al cliente'.green);
+    console.log(chalk.green('✅ Handler de botones agregado al cliente'));
 };
