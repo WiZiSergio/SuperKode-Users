@@ -139,7 +139,7 @@ module.exports = {
                 .addFields([
                     { name: '👤 Usuario', value: `${targetUser.username} (${targetUser.tag})`, inline: true },
                     { name: '🆔 ID', value: targetUser.id, inline: true },
-                    { name: '👨‍💼 Moderador', value: interaction.user.username, inline: true },
+                    { name: '👨‍💼 Moderador', value: `${interaction.user} (${interaction.user.username})`, inline: true },
                     { name: '📋 Razón', value: reason, inline: false },
                     { name: '💬 DM enviado', value: dmSent ? '✅ Sí' : '❌ No', inline: true },
                     { name: '📅 Fecha', value: new Date().toLocaleString('es-ES'), inline: true },

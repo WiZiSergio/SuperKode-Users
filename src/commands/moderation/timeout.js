@@ -150,7 +150,7 @@ module.exports = {
                 .addFields([
                     { name: '👤 Usuario', value: `${targetUser.username} (${targetUser.tag})`, inline: true },
                     { name: '🆔 ID', value: targetUser.id, inline: true },
-                    { name: '👨‍💼 Moderador', value: interaction.user.username, inline: true },
+                    { name: '👨‍💼 Moderador', value: `${interaction.user} (${interaction.user.username})`, inline: true },
                     { name: '📋 Razón', value: reason, inline: false },
                     { name: '⏰ Duración', value: `${duration} minutos`, inline: true },
                     { name: '📅 Hasta', value: timeoutUntil.toLocaleString('es-ES'), inline: true },

@@ -76,7 +76,7 @@ module.exports = {
                 .addFields([
                     { name: '👤 Usuario', value: `${bannedUser.user.username} (${bannedUser.user.tag})`, inline: true },
                     { name: '🆔 ID', value: userId, inline: true },
-                    { name: '👨‍💼 Moderador', value: interaction.user.username, inline: true },
+                    { name: '👨‍💼 Moderador', value: `${interaction.user} (${interaction.user.username})`, inline: true },
                     { name: '📋 Razón', value: reason, inline: false },
                     { name: '📋 Razón del ban original', value: bannedUser.reason || 'No especificada', inline: false },
                     { name: '📅 Fecha', value: new Date().toLocaleString('es-ES'), inline: true }

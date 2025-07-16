@@ -143,7 +143,7 @@ module.exports = {
                 .addFields([
                     { name: '👤 Usuario', value: `${targetUser.username} (${targetUser.tag})`, inline: true },
                     { name: '🆔 ID', value: targetUser.id, inline: true },
-                    { name: '👨‍💼 Removido por', value: interaction.user.username, inline: true },
+                    { name: '👨‍💼 Removido por', value: `${interaction.user} (${interaction.user.username})`, inline: true },
                     { name: '🔢 Warning ID', value: warningToRemove.id, inline: true },
                     { name: '📊 Advertencias restantes', value: `${remainingWarnings}`, inline: true },
                     { name: '💬 DM enviado', value: dmSent ? '✅ Sí' : '❌ No', inline: true },
