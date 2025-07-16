@@ -49,48 +49,57 @@ function loadConfig() {
 }
 
 /**
- * Función para cargar comandos desde las carpetas de categorías
+ * Función para cargar comandos slash desde las carpetas de categorías
  * @param {Client} client - Cliente de Discord
  */
 function loadCommands(client) {
-    const commandsPath = path.join(__dirname, '..', 'commands');
+    const slashCommandsPath = path.join(__dirname, '..', 'commands', 'slash');
 
-    if (!fs.existsSync(commandsPath)) {
-        console.warn(chalk.yellow(`⚠️ Carpeta de comandos no encontrada: ${commandsPath}`));
+    if (!fs.existsSync(slashCommandsPath)) {
+        console.warn(chalk.yellow(`⚠️ Carpeta de comandos slash no encontrada: ${slashCommandsPath}`));
         return;
     }
 
-    const commandFolders = fs.readdirSync(commandsPath);
+    // Función recursiva para cargar comandos de subcarpetas
+    function loadCommandsFromFolder(folderPath, relativePath = '') {
+        const items = fs.readdirSync(folderPath);
 
-    for (const folder of commandFolders) {
-        const folderPath = path.join(commandsPath, folder);
-        if (fs.statSync(folderPath).isDirectory()) {
-            const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
+        for (const item of items) {
+            const itemPath = path.join(folderPath, item);
+            const stats = fs.statSync(itemPath);
 
-            for (const file of commandFiles) {
-                const filePath = path.join(folderPath, file);
-
+            if (stats.isDirectory()) {
+                // Si es una carpeta, cargar recursivamente
+                const newRelativePath = relativePath ? `${relativePath}/${item}` : item;
+                loadCommandsFromFolder(itemPath, newRelativePath);
+            } else if (item.endsWith('.js')) {
+                // Si es un archivo .js, cargarlo como comando
                 try {
                     // Limpiar cache antes de requerir
-                    delete require.cache[require.resolve(filePath)];
-                    const command = require(filePath);
+                    delete require.cache[require.resolve(itemPath)];
+                    const command = require(itemPath);
 
                     // Agregar información del archivo al comando
-                    command._fileName = `${folder}/${file}`;
-                    command._category = folder;
+                    const fileName = relativePath ? `${relativePath}/${item}` : item;
+                    command._fileName = fileName;
+                    command._category = relativePath ? relativePath.split('/')[0] : 'root';
 
                     if ('data' in command && 'execute' in command) {
                         client.commands.set(command.data.name, command);
-                        console.log(chalk.green(`✅ Comando cargado: ${command.data.name} (${command._fileName})`));
+                        console.log(chalk.green(`✅ Comando cargado: ${command.data.name} (${fileName})`));
                     } else {
-                        console.warn(chalk.yellow(`⚠️ Estructura de comando inválida en ${command._fileName}`));
+                        console.warn(chalk.yellow(`⚠️ Estructura de comando inválida en ${fileName}`));
                     }
                 } catch (error) {
-                    console.error(chalk.red(`❌ Error al cargar comando ${folder}/${file}: ${error.message}`));
+                    const fileName = relativePath ? `${relativePath}/${item}` : item;
+                    console.error(chalk.red(`❌ Error al cargar comando ${fileName}: ${error.message}`));
                 }
             }
         }
     }
+
+    // Cargar comandos desde la carpeta slash
+    loadCommandsFromFolder(slashCommandsPath);
 }
 
 /**

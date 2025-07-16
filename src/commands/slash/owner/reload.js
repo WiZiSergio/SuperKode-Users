@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { loadConfig } = require('../../structure/loadfolders');
-const dbManager = require('../../structure/databases/database');
+const { loadConfig } = require('../../../structure/loadfolders');
+const dbManager = require('../../../structure/databases/database');
 
 module.exports = {
     data: new SlashCommandBuilder()
