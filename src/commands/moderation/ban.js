@@ -183,10 +183,10 @@ module.exports = {
                         .setTimestamp()
                         .setFooter({ text: interaction.guild.name, iconURL: interaction.guild.iconURL() });
 
-                    await targetUser.send({ embeds: [dmEmbed] });
+                    await finalTargetUser.send({ embeds: [dmEmbed] });
                     dmSent = true;
                 } catch (error) {
-                    console.log(chalk.yellow(`⚠️ No se pudo enviar DM a ${targetUser.username}`));
+                    console.log(chalk.yellow(`⚠️ No se pudo enviar DM a ${finalTargetUser.username}`));
                 }
             }
 
@@ -219,14 +219,14 @@ module.exports = {
             // Registrar la acción en logs
             if (interaction.client.logModerationAction) {
                 interaction.client.logModerationAction({
-                    action: `Ban de usuario: ${targetUser.username}`,
+                    action: `Ban de usuario: ${finalTargetUser.username}`,
                     user: interaction.user,
                     guild: interaction.guild,
                     details: {
                         targetUser: {
-                            id: targetUser.id,
-                            username: targetUser.username,
-                            tag: targetUser.tag
+                            id: finalUserId,
+                            username: finalTargetUser.username,
+                            tag: finalTargetUser.tag
                         },
                         reason: reason,
                         deleteMessageDays: deleteMessageDays,
@@ -237,7 +237,7 @@ module.exports = {
             }
 
             // Log en consola
-            console.log(chalk.red(`🔨 ${targetUser.username} baneado de ${interaction.guild.name} por ${interaction.user.username}`));
+            console.log(chalk.red(`🔨 ${finalTargetUser.username} baneado de ${interaction.guild.name} por ${interaction.user.username}`));
 
         } catch (error) {
             console.error(chalk.red('❌ Error ejecutando ban:'), error);
@@ -260,14 +260,14 @@ module.exports = {
             // Registrar error en logs
             if (interaction.client.logModerationAction) {
                 interaction.client.logModerationAction({
-                    action: `Error en ban de usuario: ${targetUser.username}`,
+                    action: `Error en ban de usuario: ${finalTargetUser ? finalTargetUser.username : finalUserId}`,
                     user: interaction.user,
                     guild: interaction.guild,
                     details: {
                         targetUser: {
-                            id: targetUser.id,
-                            username: targetUser.username,
-                            tag: targetUser.tag
+                            id: finalUserId,
+                            username: finalTargetUser ? finalTargetUser.username : 'Desconocido',
+                            tag: finalTargetUser ? finalTargetUser.tag : 'Desconocido'
                         },
                         error: error.message
                     },
