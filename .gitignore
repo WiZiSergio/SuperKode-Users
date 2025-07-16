@@ -10,28 +10,6 @@ src/structure/config/configbot/.env
 # Database files
 src/structure/databases/bases/*.json
 
-# Temporary export files
-temp/
-*.tmp
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-
 # IDE files
 .vscode/
 .idea/
-*.swp
-*.swo
