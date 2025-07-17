@@ -26,7 +26,7 @@ Comandos de entretenimiento y diversión:
 
 ### 🔧 **utility/**
 Comandos de utilidad general:
-- *(Vacía - Lista para futuros comandos)*
+- `converter.js` - Convertir videos de YouTube a MP3/MP4 (6 calidades audio, 6 calidades video)
 
 ## 📝 Formato de Comandos Slash
 
@@ -55,8 +55,8 @@ module.exports = {
 
 ## 📊 Estado Actual
 
-- **Total comandos:** 10
+- **Total comandos:** 11
 - **Moderación:** 8 comandos
 - **Owner:** 2 comandos
 - **Fun:** 0 comandos
-- **Utility:** 0 comandos
+- **Utility:** 1 comando
