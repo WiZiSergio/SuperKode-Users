@@ -61,7 +61,9 @@ const CONVERSION_SETTINGS = {
             '160': '160k',
             '192': '192k',
             '256': '256k',
-            '320': '320k'
+            '320': '320k',
+            '384': '384k',
+            '448': '448k'
         },
         format: 'mp3'
     },
@@ -73,8 +75,12 @@ const CONVERSION_SETTINGS = {
             '240': '426x240',
             '360': '640x360',
             '480': '854x480',
+            '540': '960x540',
             '720': '1280x720',
-            '1080': '1920x1080'
+            '900': '1600x900',
+            '1080': '1920x1080',
+            '1440': '2560x1440',
+            '2160': '3840x2160'
         },
         format: 'mp4'
     }
@@ -85,7 +91,7 @@ const CONVERSION_SETTINGS = {
  */
 const LIMITS = {
     maxDuration: 1800, // 30 minutos en segundos
-    maxFileSize: 500 * 1024 * 1024, // 500 MB en bytes (límite muy alto)
+    maxFileSize: 5 * 1024 * 1024 * 1024, // 5 GB en bytes (límite ampliado para videos 4K)
     tempDir: path.join(__dirname, '../../../temp'),
     cleanupDelay: 5000 // 5 segundos para limpiar archivos temporales
 };
