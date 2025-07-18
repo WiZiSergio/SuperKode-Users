@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js')
 const ytdl = require('@distube/ytdl-core');
-const { ffmpeg, CONVERSION_SETTINGS, LIMITS } = require('../../../structure/config/ffmpeg');
+const { ffmpeg, LIMITS } = require('../../../structure/config/ffmpeg');
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
