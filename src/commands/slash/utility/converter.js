@@ -42,7 +42,6 @@ module.exports = {
                     option.setName('calidad')
                         .setDescription('Calidad del video')
                         .addChoices(
-                            { name: '🎥 2160p (4K UHD)', value: '2160' },
                             { name: '🎬 1440p (2K QHD)', value: '1440' },
                             { name: '🎬 1080p (Full HD)', value: '1080' },
                             { name: '📺 900p (HD+)', value: '900' },
@@ -81,6 +80,7 @@ module.exports = {
 
         // Variable para rastrear si la interacción sigue válida
         let interactionValid = true;
+        const user = interaction.user;
 
         // Función helper para actualizar de forma segura
         const safeUpdate = async (content) => {
@@ -88,11 +88,41 @@ module.exports = {
             try {
                 await interaction.editReply(content);
             } catch (error) {
-                if (error.code === 10062) {
+                if (error.code === 10062 || error.message.includes('Unknown interaction') || error.name === 'AbortError') {
                     console.log(chalk.yellow('⚠️ Interacción expirada, continuando procesamiento...'));
                     interactionValid = false;
                 } else {
-                    throw error;
+                    console.error(chalk.red('❌ Error actualizando interacción:'), error.message);
+                    interactionValid = false;
+                }
+            }
+        };
+
+        // Función para enviar resultado cuando la interacción expire
+        const sendFallbackResult = async (content) => {
+            if (interactionValid) {
+                return await safeUpdate(content);
+            }
+
+            try {
+                // Intentar enviar por DM al usuario
+                await user.send({
+                    content: `🎵 **Conversión Completada** (la interacción expiró)\n\nAquí está tu archivo convertido:`,
+                    ...content
+                });
+                console.log(chalk.green('✅ Resultado enviado por DM al usuario'));
+            } catch (dmError) {
+                console.error(chalk.red('❌ No se pudo enviar DM al usuario:'), dmError.message);
+
+                // Como último recurso, intentar enviar en el canal
+                try {
+                    await interaction.channel.send({
+                        content: `${user}, tu conversión está lista (la interacción expiró):`,
+                        ...content
+                    });
+                    console.log(chalk.green('✅ Resultado enviado en el canal'));
+                } catch (channelError) {
+                    console.error(chalk.red('❌ No se pudo enviar en el canal:'), channelError.message);
                 }
             }
         };
@@ -133,14 +163,17 @@ module.exports = {
         }
 
         try {
-            // Obtener información del video con opciones mejoradas
-            const info = await ytdl.getInfo(url, {
-                requestOptions: {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    }
-                }
-            });
+            // Crear timeout para toda la operación (10 minutos máximo)
+            const operationTimeout = setTimeout(() => {
+                console.log(chalk.yellow('⏰ Operación de conversión alcanzó el timeout máximo'));
+                interactionValid = false;
+            }, 10 * 60 * 1000); // 10 minutos
+
+            // Obtener información del video con opciones mejoradas y timeout
+            const info = await getVideoInfoWithRetry(url, 3);
+
+            // Si llegamos aquí, limpiar el timeout
+            clearTimeout(operationTimeout);
             const videoDetails = info.videoDetails;
 
             // Verificar duración del video
@@ -190,10 +223,10 @@ module.exports = {
 
             if (subcommand === 'mp3') {
                 // Procesar MP3
-                await processMP3(url, outputFile, quality, safeUpdate, processingEmbed, videoDetails);
+                await processMP3(url, outputFile, quality, safeUpdate, sendFallbackResult, processingEmbed, videoDetails);
             } else {
                 // Procesar MP4
-                await processMP4(url, outputFile, quality, safeUpdate, processingEmbed, videoDetails);
+                await processMP4(url, outputFile, quality, safeUpdate, sendFallbackResult, processingEmbed, videoDetails);
             }
 
         } catch (error) {
@@ -220,6 +253,14 @@ module.exports = {
                 errorTitle = '🔞 Restricción de Edad';
                 errorDescription = 'Este video tiene restricciones de edad.';
                 possibleCauses = '• Video con restricción de edad\n• Requiere inicio de sesión\n• Intenta con otro video\n• Contenido no disponible para bots';
+            } else if (error.message.includes('This operation was aborted') || error.name === 'AbortError') {
+                errorTitle = '⏱️ Timeout de Conexión';
+                errorDescription = 'La conexión con YouTube tardó demasiado tiempo.';
+                possibleCauses = '• Conexión a internet lenta\n• YouTube está experimentando problemas\n• El video es muy grande\n• Intenta de nuevo en unos minutos';
+            } else if (error.message.includes('ECONNRESET') || error.message.includes('ETIMEDOUT')) {
+                errorTitle = '🌐 Error de Conexión';
+                errorDescription = 'Problemas de conectividad con YouTube.';
+                possibleCauses = '• Verifica tu conexión a internet\n• YouTube puede estar bloqueado\n• Problemas temporales del servidor\n• Intenta con una VPN si es necesario';
             }
 
             const errorEmbed = new EmbedBuilder()
@@ -239,17 +280,11 @@ module.exports = {
 };
 
 // Función para procesar MP3
-async function processMP3(url, outputFile, quality, safeUpdate, processingEmbed, videoDetails) {
+async function processMP3(url, outputFile, quality, safeUpdate, sendFallbackResult, processingEmbed, videoDetails) {
     return new Promise(async (resolve, reject) => {
         try {
-            // Obtener información detallada de formatos disponibles
-            const info = await ytdl.getInfo(url, {
-                requestOptions: {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    }
-                }
-            });
+            // Obtener información detallada de formatos disponibles con reintentos
+            const info = await getVideoInfoWithRetry(url, 3);
 
             // Filtrar formatos de audio únicamente
             const audioFormats = info.formats.filter(format =>
@@ -277,14 +312,21 @@ async function processMP3(url, outputFile, quality, safeUpdate, processingEmbed,
                 format: selectedFormat,
                 requestOptions: {
                     headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    }
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    },
+                    timeout: 30000 // 30 segundos timeout
                 }
             });
 
         // Actualizar estado
         processingEmbed.data.fields[4].value = '🎵 Extrayendo audio...';
         await safeUpdate({ embeds: [processingEmbed] });
+
+        // Manejar errores del stream de audio
+        audioStream.on('error', (error) => {
+            console.error(chalk.red('❌ Error en stream de audio:'), error);
+            reject(new Error(`Error en descarga de audio: ${error.message}`));
+        });
 
         // Convertir a MP3 con FFmpeg
         ffmpeg(audioStream)
@@ -342,7 +384,7 @@ async function processMP3(url, outputFile, quality, safeUpdate, processingEmbed,
                         .setThumbnail(videoDetails.thumbnails[0]?.url)
                         .setTimestamp();
 
-                    await safeUpdate({
+                    await sendFallbackResult({
                         embeds: [successEmbed],
                         files: [attachment]
                     });
@@ -375,17 +417,11 @@ async function processMP3(url, outputFile, quality, safeUpdate, processingEmbed,
 }
 
 // Función para procesar MP4
-async function processMP4(url, outputFile, quality, safeUpdate, processingEmbed, videoDetails) {
+async function processMP4(url, outputFile, quality, safeUpdate, sendFallbackResult, processingEmbed, videoDetails) {
     return new Promise(async (resolve, reject) => {
         try {
-            // Obtener información detallada de formatos disponibles
-            const info = await ytdl.getInfo(url, {
-                requestOptions: {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    }
-                }
-            });
+            // Obtener información detallada de formatos disponibles con reintentos
+            const info = await getVideoInfoWithRetry(url, 3);
 
             // Filtrar formatos de video (con y sin audio por separado)
             const videoWithAudioFormats = info.formats.filter(format =>
@@ -406,9 +442,6 @@ async function processMP4(url, outputFile, quality, safeUpdate, processingEmbed,
                 (format.container === 'webm' || format.container === 'm4a')
             );
 
-            // Combinar todos los formatos de video disponibles
-            const allVideoFormats = [...videoWithAudioFormats, ...videoOnlyFormats];
-
             console.log(chalk.blue('📊 Formatos disponibles:'));
             console.log(chalk.cyan('🎥 Con audio:'), videoWithAudioFormats.map(f => `${f.height}p (${f.qualityLabel})`));
             console.log(chalk.cyan('🎬 Solo video:'), videoOnlyFormats.map(f => `${f.height}p (${f.qualityLabel})`));
@@ -424,8 +457,7 @@ async function processMP4(url, outputFile, quality, safeUpdate, processingEmbed,
                 '720': 720,
                 '900': 900,
                 '1080': 1080,
-                '1440': 1440,
-                '2160': 2160
+                '1440': 1440
             };
 
             const targetHeight = qualityMap[quality];
@@ -514,13 +546,13 @@ async function processMP4(url, outputFile, quality, safeUpdate, processingEmbed,
             // Configurar descarga según el tipo de formato
             if (needsSeparateAudio && selectedAudioFormat) {
                 // Método de archivos temporales para combinación de streams
-                await processWithSeparateStreams(url, outputFile, selectedVideoFormat, selectedAudioFormat, safeUpdate, processingEmbed, videoDetails, quality);
+                await processWithSeparateStreams(url, outputFile, selectedVideoFormat, selectedAudioFormat, safeUpdate, sendFallbackResult, processingEmbed, videoDetails, quality);
             } else {
                 // Método directo para formatos con audio integrado
-                await processWithIntegratedAudio(url, outputFile, selectedVideoFormat, safeUpdate, processingEmbed, videoDetails, quality);
+                await processWithIntegratedAudio(url, outputFile, selectedVideoFormat, safeUpdate, sendFallbackResult, processingEmbed, videoDetails, quality);
             }
 
-
+            resolve(); // Resolver la promesa cuando el procesamiento termine exitosamente
 
         } catch (error) {
             // Manejar errores de obtención de información o selección de formato
@@ -531,15 +563,22 @@ async function processMP4(url, outputFile, quality, safeUpdate, processingEmbed,
 }
 
 // Función para procesar con audio integrado (método directo)
-async function processWithIntegratedAudio(url, outputFile, selectedVideoFormat, safeUpdate, processingEmbed, videoDetails, quality) {
+async function processWithIntegratedAudio(url, outputFile, selectedVideoFormat, safeUpdate, sendFallbackResult, processingEmbed, videoDetails, quality) {
     return new Promise((resolve, reject) => {
         const videoStream = ytdl(url, {
             format: selectedVideoFormat,
             requestOptions: {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                },
+                timeout: 30000 // 30 segundos timeout
             }
+        });
+
+        // Manejar errores del stream de video
+        videoStream.on('error', (error) => {
+            console.error(chalk.red('❌ Error en stream de video:'), error);
+            reject(new Error(`Error en descarga de video: ${error.message}`));
         });
 
         ffmpeg(videoStream)
@@ -554,7 +593,7 @@ async function processWithIntegratedAudio(url, outputFile, selectedVideoFormat, 
             })
             .on('end', async () => {
                 try {
-                    await handleSuccessfulConversion(outputFile, safeUpdate, videoDetails, quality, selectedVideoFormat, false);
+                    await handleSuccessfulConversion(outputFile, safeUpdate, sendFallbackResult, videoDetails, quality, selectedVideoFormat, false);
                     resolve();
                 } catch (error) {
                     reject(error);
@@ -569,7 +608,7 @@ async function processWithIntegratedAudio(url, outputFile, selectedVideoFormat, 
 }
 
 // Función para procesar con streams separados (combinación)
-async function processWithSeparateStreams(url, outputFile, selectedVideoFormat, selectedAudioFormat, safeUpdate, processingEmbed, videoDetails, quality) {
+async function processWithSeparateStreams(url, outputFile, selectedVideoFormat, selectedAudioFormat, safeUpdate, sendFallbackResult, processingEmbed, videoDetails, quality) {
     return new Promise(async (resolve, reject) => {
         try {
             const tempDir = path.dirname(outputFile);
@@ -600,7 +639,7 @@ async function processWithSeparateStreams(url, outputFile, selectedVideoFormat, 
             if (fs.existsSync(tempAudioFile)) fs.unlinkSync(tempAudioFile);
 
             // Manejar éxito
-            await handleSuccessfulConversion(outputFile, safeUpdate, videoDetails, quality, selectedVideoFormat, true);
+            await handleSuccessfulConversion(outputFile, safeUpdate, sendFallbackResult, videoDetails, quality, selectedVideoFormat, true);
             resolve();
 
         } catch (error) {
@@ -626,8 +665,9 @@ function downloadVideoStream(url, videoFormat, outputPath) {
             format: videoFormat,
             requestOptions: {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                },
+                timeout: 30000 // 30 segundos timeout
             }
         });
 
@@ -651,8 +691,9 @@ function downloadAudioStream(url, audioFormat, outputPath) {
             format: audioFormat,
             requestOptions: {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                },
+                timeout: 30000 // 30 segundos timeout
             }
         });
 
@@ -693,7 +734,7 @@ function combineStreams(videoPath, audioPath, outputPath, processingEmbed, safeU
 }
 
 // Función para manejar conversión exitosa
-async function handleSuccessfulConversion(outputFile, safeUpdate, videoDetails, quality, selectedVideoFormat, wasCombined) {
+async function handleSuccessfulConversion(outputFile, safeUpdate, sendFallbackResult, videoDetails, quality, selectedVideoFormat, wasCombined) {
     // Verificar tamaño del archivo
     const stats = fs.statSync(outputFile);
     const fileSizeMB = stats.size / (1024 * 1024);
@@ -747,7 +788,7 @@ async function handleSuccessfulConversion(outputFile, safeUpdate, videoDetails, 
         ]);
     }
 
-    await safeUpdate({
+    await sendFallbackResult({
         embeds: [successEmbed],
         files: [attachment]
     });
@@ -758,4 +799,48 @@ async function handleSuccessfulConversion(outputFile, safeUpdate, videoDetails, 
     }, 5000);
 
     console.log(chalk.green(`✅ MP4 descargado exitosamente: ${videoDetails.title} (${selectedVideoFormat.height}p)`));
+}
+
+/**
+ * Función helper para obtener información del video con reintentos y timeout
+ * @param {string} url - URL del video
+ * @param {number} maxRetries - Número máximo de reintentos
+ * @returns {Promise} Información del video
+ */
+async function getVideoInfoWithRetry(url, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(chalk.blue(`🔄 Intento ${attempt}/${maxRetries} - Obteniendo información del video...`));
+
+            // Crear un AbortController para manejar timeouts
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
+
+            const info = await ytdl.getInfo(url, {
+                requestOptions: {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    },
+                    signal: controller.signal
+                }
+            });
+
+            clearTimeout(timeoutId);
+            console.log(chalk.green(`✅ Información del video obtenida exitosamente`));
+            return info;
+
+        } catch (error) {
+            console.error(chalk.red(`❌ Intento ${attempt}/${maxRetries} falló:`, error.message));
+
+            if (attempt === maxRetries) {
+                // Si es el último intento, lanzar el error
+                throw error;
+            }
+
+            // Esperar antes del siguiente intento (backoff exponencial)
+            const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s...
+            console.log(chalk.yellow(`⏳ Esperando ${delay/1000}s antes del siguiente intento...`));
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
 }

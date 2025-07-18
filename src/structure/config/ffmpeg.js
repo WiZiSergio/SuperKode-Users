@@ -79,8 +79,7 @@ const CONVERSION_SETTINGS = {
             '720': '1280x720',
             '900': '1600x900',
             '1080': '1920x1080',
-            '1440': '2560x1440',
-            '2160': '3840x2160'
+            '1440': '2560x1440'
         },
         format: 'mp4'
     }
@@ -91,7 +90,7 @@ const CONVERSION_SETTINGS = {
  */
 const LIMITS = {
     maxDuration: 1800, // 30 minutos en segundos
-    maxFileSize: 5 * 1024 * 1024 * 1024, // 5 GB en bytes (límite ampliado para videos 4K)
+    maxFileSize: 2 * 1024 * 1024 * 1024, // 2 GB en bytes (límite optimizado sin 4K)
     tempDir: path.join(__dirname, '../../../temp'),
     cleanupDelay: 5000 // 5 segundos para limpiar archivos temporales
 };
