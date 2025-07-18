@@ -21,6 +21,8 @@ module.exports = {
                     option.setName('calidad')
                         .setDescription('Calidad del audio')
                         .addChoices(
+                            { name: '🎵 Máxima Profesional (448kbps)', value: '448' },
+                            { name: '🔊 Ultra Alta (384kbps)', value: '384' },
                             { name: '🔊 Máxima (320kbps)', value: '320' },
                             { name: '🔉 Alta (256kbps)', value: '256' },
                             { name: '🔉 Media-Alta (192kbps)', value: '192' },
@@ -40,8 +42,12 @@ module.exports = {
                     option.setName('calidad')
                         .setDescription('Calidad del video')
                         .addChoices(
+                            { name: '🎥 2160p (4K UHD)', value: '2160' },
+                            { name: '🎬 1440p (2K QHD)', value: '1440' },
                             { name: '🎬 1080p (Full HD)', value: '1080' },
+                            { name: '📺 900p (HD+)', value: '900' },
                             { name: '📺 720p (HD)', value: '720' },
+                            { name: '📱 540p (qHD)', value: '540' },
                             { name: '📱 480p (SD)', value: '480' },
                             { name: '📞 360p (Móvil)', value: '360' },
                             { name: '📟 240p (Baja)', value: '240' },
@@ -414,8 +420,12 @@ async function processMP4(url, outputFile, quality, safeUpdate, processingEmbed,
                 '240': 240,
                 '360': 360,
                 '480': 480,
+                '540': 540,
                 '720': 720,
-                '1080': 1080
+                '900': 900,
+                '1080': 1080,
+                '1440': 1440,
+                '2160': 2160
             };
 
             const targetHeight = qualityMap[quality];
