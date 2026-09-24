@@ -13,3 +13,4 @@ src/structure/databases/bases/*.json
 # IDE files
 .vscode/
 .idea/
+vendor/ffmpeg/ffmpeg-win64.zip
