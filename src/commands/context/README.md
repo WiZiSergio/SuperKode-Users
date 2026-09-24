@@ -1,73 +1,29 @@
-# 📁 Comandos de Contexto
+# Comandos de contexto
 
-Esta carpeta contiene todos los comandos de contexto (menú contextual) del bot.
+Esta carpeta está preparada para futuros comandos de contexto, pero actualmente no hay ninguna implementación activa en el proyecto.
 
-## 🖱️ ¿Qué son los Comandos de Contexto?
+## Estado actual
 
-Los comandos de contexto aparecen cuando haces clic derecho en:
-- **Usuarios** (User Context Commands)
-- **Mensajes** (Message Context Commands)
+- No hay comandos de contexto registrados en la app
+- La estructura queda disponible para futuras extensiones
+- La base del proyecto usa comandos slash como interfaz principal
 
-## 📂 Estructura Recomendada
+## Ejemplo mínimo
 
-### 👤 **user/**
-Comandos que aparecen al hacer clic derecho en un usuario:
-- Ejemplos: Ver perfil, moderar usuario, obtener información
+```js
+import { ContextMenuCommandBuilder, ApplicationCommandType } from 'discord.js';
 
-### 💬 **message/**
-Comandos que aparecen al hacer clic derecho en un mensaje:
-- Ejemplos: Reportar mensaje, traducir, obtener información
+export default {
+  data: new ContextMenuCommandBuilder()
+    .setName('info-usuario')
+    .setType(ApplicationCommandType.User),
 
-## 📝 Formato de Comandos de Contexto
-
-### Comando de Usuario:
-```javascript
-const { ContextMenuCommandBuilder, ApplicationCommandType } = require('discord.js');
-
-module.exports = {
-    data: new ContextMenuCommandBuilder()
-        .setName('Nombre del Comando')
-        .setType(ApplicationCommandType.User),
-    
-    async execute(interaction) {
-        const targetUser = interaction.targetUser;
-        // Lógica del comando
-    }
+  async execute(interaction) {
+    await interaction.reply({ content: `Usuario: ${interaction.targetUser.tag}` });
+  }
 };
 ```
 
-### Comando de Mensaje:
-```javascript
-const { ContextMenuCommandBuilder, ApplicationCommandType } = require('discord.js');
+## Recomendación
 
-module.exports = {
-    data: new ContextMenuCommandBuilder()
-        .setName('Nombre del Comando')
-        .setType(ApplicationCommandType.Message),
-    
-    async execute(interaction) {
-        const targetMessage = interaction.targetMessage;
-        // Lógica del comando
-    }
-};
-```
-
-## 💡 Ideas para Comandos de Contexto
-
-### Usuario:
-- **Ver Casos** - Historial de moderación rápido
-- **Información** - Datos del usuario
-- **Moderar** - Acciones rápidas de moderación
-
-### Mensaje:
-- **Reportar** - Reportar contenido inapropiado
-- **Traducir** - Traducir mensaje
-- **Información** - Datos del mensaje
-
-## 📊 Estado Actual
-
-- **Total comandos:** 0
-- **Usuario:** 0 comandos
-- **Mensaje:** 0 comandos
-
-*Esta carpeta está lista para recibir comandos de contexto.*
+Se mantiene esta carpeta reservada para comandos de usuario o mensajes, pero el bot actual se centra en comandos slash y utilidades de moderación.

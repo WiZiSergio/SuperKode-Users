@@ -1,65 +1,95 @@
 # SuperKode Bot
 
-Bot de Discord desarrollado por WiZiSergio para la gestión de usuarios de SuperKode.
+Bot de Discord moderno para moderación, gestión y utilidades, diseñado para Node 22+ y Discord.js v14 con enfoque en comandos slash.
 
-## 🚀 Configuración
+## ✅ Estado actual
 
-### 1. Instalar dependencias
+- Node recomendado: 22+ / 25+
+- Módulo: ESM (`"type": "module"`)
+- Biblioteca principal: `discord.js` v14
+- Comandos: slash commands
+- Moderación: gestión de advertencias, timeout, kick, ban, etc.
+- Utilidades: conversor de YouTube a MP3/MP4
+
+## 🚀 Requisitos
+
+- Node.js 22 o superior
+- FFmpeg instalado y accesible en PATH
+- Token de bot de Discord
+- Cliente Discord configurado en el portal de desarrolladores
+
+## ⚙️ Instalación
+
 ```bash
-npm install discord.js dotenv
+npm install
 ```
 
-### 2. Configurar el bot
-1. Ve a la carpeta `src/structure/config/configbot/`
-2. Copia el archivo `.env.example` y renómbralo a `.env`
-3. Edita el archivo `.env` y configura:
-   - `DISCORD_TOKEN`: Tu token del bot de Discord
-   - `DISCORD_CLIENT_ID`: El ID de tu aplicación/bot de Discord
+Crea o edita el archivo de entorno:
+
+```bash
+src/structure/config/configbot/.env
+```
+
+Ejemplo:
 
 ```env
-DISCORD_TOKEN=tu_token_real_aqui
+DISCORD_TOKEN=tu_token_aqui
 DISCORD_CLIENT_ID=tu_client_id_aqui
 ```
 
-**¿Cómo obtener estos valores?**
-- **Token**: Ve a [Discord Developer Portal](https://discord.com/developers/applications) → Tu aplicación → Bot → Token
-- **Client ID**: Ve a [Discord Developer Portal](https://discord.com/developers/applications) → Tu aplicación → General Information → Application ID
+## ▶️ Ejecutar
 
-### 3. Ejecutar el bot
 ```bash
 node spu.js
 ```
 
-## 📁 Estructura del proyecto
+## 🧩 Estructura principal
 
+```text
+SuperKode-Users/
+├── package.json
+├── spu.js
+├── src/
+│   ├── commands/
+│   │   ├── context/
+│   │   └── slash/
+│   ├── moderation/
+│   ├── structure/
+│   │   ├── commands/
+│   │   ├── config/
+│   │   ├── databases/
+│   │   ├── events/
+│   │   └── handlers/
+│   └── temp/
+├── CONVERTER_EXAMPLES.md
+├── FFMPEG_SETUP.md
+├── STREAM_COMBINATION_SYSTEM.md
+└── README.md
 ```
-📁 SuperKode-Users/
-├── 📄 spu.js (archivo de arranque del bot)
-└── 📁 src/
-    ├── 📁 commands/ (comandos organizados por categorías)
-    │   ├── 📁 admin/
-    │   ├── 📁 fun/
-    │   ├── 📁 moderation/
-    │   └── 📁 utility/
-    └── 📁 structure/
-        ├── 📄 loadfolders.js (cargador de componentes)
-        ├── 📁 config/
-        │   └── 📁 configbot/
-        │       ├── 📄 .env (variables de entorno - no incluido en git)
-        │       └── 📄 .env.example (ejemplo de variables de entorno)
-        ├── 📁 events/ (eventos del bot)
-        ├── 📁 handlers/ (manejadores)
-        └── 📁 databases/ (base de datos)
-```
 
-## ⚠️ Importante
-- **Nunca compartas tu token de Discord o Client ID**
-- El archivo `.env` está excluido del control de versiones por seguridad
-- Usa `.env.example` como referencia para la configuración
-- La configuración ahora usa variables de entorno para mayor seguridad
-- Asegúrate de tener tanto el token como el Client ID configurados
+## 🛡️ Funcionalidades principales
 
-## Contribución
-Desarrollado por WiZiSergio.
+- Comandos slash de moderación
+- Sistema de advertencias y casos
+- Timeouts, expulsiones y sanciones por roles
+- Gestión de propietarios y configuración del servidor
+- Conversor de YouTube a MP3/MP4
+- Carga dinámica de comandos, eventos y handlers
+
+## 🔒 Seguridad
+
+- No compartas el token del bot
+- Mantén el archivo `.env` fuera del control de versiones
+- Usa solo variables de entorno y no valores fijos en el código
+
+## 📚 Documentación útil
+
+- [CONVERTER_EXAMPLES.md](CONVERTER_EXAMPLES.md)
+- [FFMPEG_SETUP.md](FFMPEG_SETUP.md)
+- [STREAM_COMBINATION_SYSTEM.md](STREAM_COMBINATION_SYSTEM.md)
+
+## 👤 Autor
+
+WiZiSergio
 
 

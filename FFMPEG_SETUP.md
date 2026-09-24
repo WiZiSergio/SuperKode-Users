@@ -1,155 +1,61 @@
-# 🎥 Configuración de FFmpeg para el Comando Converter
+# Configuración de FFmpeg
 
-Para que el comando `/converter` funcione correctamente, necesitas tener **FFmpeg** instalado en tu sistema.
+Para que el comando `/converter` funcione correctamente, FFmpeg debe estar instalado y disponible en la PATH del sistema.
 
-## 🪟 Instalación en Windows
+## Windows
 
-### Método 1: Usando Winget (Recomendado)
-```bash
-winget install ffmpeg
+### Winget
+
+```powershell
+winget install Gyan.Dev.FFmpeg
 ```
 
-### Método 2: Descarga Manual
-1. Ve a https://ffmpeg.org/download.html#build-windows
-2. Descarga la versión "release builds"
-3. Extrae el archivo ZIP
-4. Agrega la carpeta `bin` al PATH del sistema
+### Chocolatey
 
-### Método 3: Usando Chocolatey
-```bash
+```powershell
 choco install ffmpeg
 ```
 
-## 🐧 Instalación en Linux
+### Instalación manual
 
-### Ubuntu/Debian:
+1. Descarga FFmpeg desde https://www.ffmpeg.org/download.html
+2. Extrae el paquete
+3. Añade la carpeta `bin` al PATH del sistema
+
+## Linux
+
+### Ubuntu/Debian
+
 ```bash
-sudo apt update
-sudo apt install ffmpeg
+sudo apt update && sudo apt install ffmpeg
 ```
 
-### CentOS/RHEL:
-```bash
-sudo yum install ffmpeg
-```
+### Arch
 
-### Arch Linux:
 ```bash
 sudo pacman -S ffmpeg
 ```
 
-## 🍎 Instalación en macOS
+## macOS
 
-### Usando Homebrew:
 ```bash
 brew install ffmpeg
 ```
 
-## ✅ Verificar Instalación
-
-Después de instalar, verifica que FFmpeg esté disponible:
+## Verificación
 
 ```bash
 ffmpeg -version
 ```
 
-Si ves información de la versión, FFmpeg está correctamente instalado.
+Si el comando muestra la versión, la instalación está correcta.
 
-## 🔧 Configuración Manual
+## Solución rápida si falla
 
-Si FFmpeg no está en el PATH del sistema, puedes configurar las rutas manualmente en:
-`src/structure/config/ffmpeg.js`
+- Revisa que `ffmpeg` y `ffprobe` estén en PATH
+- Reinicia la terminal o el proceso del bot
+- Si sigue fallando, configura rutas explícitas en la configuración de FFmpeg del proyecto
 
-```javascript
-// Descomentar y ajustar estas líneas:
-ffmpeg.setFfmpegPath('C:\\path\\to\\ffmpeg\\bin\\ffmpeg.exe');
-ffmpeg.setFfprobePath('C:\\path\\to\\ffmpeg\\bin\\ffprobe.exe');
-```
+## Nota
 
-## 🚨 Solución de Problemas
-
-### Error: "Cannot find ffmpeg"
-- **Causa:** FFmpeg no está instalado o no está en el PATH
-- **Solución:**
-  1. Instala FFmpeg usando los comandos de arriba
-  2. Reinicia la terminal/consola
-  3. Reinicia el bot
-  4. Vuelve a intentar el comando
-
-### Error: "Could not extract functions"
-- **Causa:** YouTube cambió su API temporalmente
-- **Solución:**
-  1. Espera unos minutos e intenta de nuevo
-  2. Verifica que la URL sea correcta
-  3. Intenta con otro video
-  4. El bot usa `@distube/ytdl-core` que es más estable
-
-### Error: "Video unavailable"
-- **Causa:** Video privado, eliminado o con restricciones
-- **Solución:**
-  1. Verifica que el video sea público
-  2. Intenta con otro video
-  3. Asegúrate de que la URL sea correcta
-
-### Error: "spawn ffmpeg ENOENT"
-- FFmpeg no está en el PATH
-- Configura las rutas manualmente en `ffmpeg.js`
-
-### Error: "Permission denied"
-- En Linux/macOS, asegúrate de que FFmpeg tenga permisos de ejecución
-- Usa `chmod +x` si es necesario
-
-## 📊 Características del Comando Converter
-
-Una vez configurado FFmpeg, el comando `/converter` podrá:
-
-### 🎵 Conversión a MP3:
-- **Calidades disponibles:** 96kbps, 128kbps, 160kbps, 192kbps, 256kbps, 320kbps
-- **Extracción de audio** de alta calidad
-- **Archivos optimizados** para diferentes usos
-- **Recomendado:** 192kbps para uso general
-
-### 🎥 Descarga de MP4:
-- **Calidades disponibles:** 144p, 240p, 360p, 480p, 720p, 1080p
-- **Mantiene audio y video** sincronizados
-- **Compresión optimizada** por calidad
-- **Recomendado:** 480p para uso general
-
-### 🛡️ Limitaciones de Seguridad:
-- Máximo 30 minutos de duración
-- Máximo 500MB de tamaño final
-- Solo URLs válidas de YouTube
-- Limpieza automática de archivos temporales
-
-## 💡 Consejos de Uso
-
-### 🎵 **Para Audio (MP3):**
-1. **Música de alta calidad**: 320kbps o 256kbps
-2. **Uso general**: 192kbps (buen balance)
-3. **Archivos pequeños**: 128kbps o 96kbps
-4. **Podcasts/voz**: 96kbps es suficiente
-
-### 🎥 **Para Video (MP4):**
-1. **Máxima calidad**: 1080p (archivos grandes)
-2. **Uso general**: 720p o 480p (recomendado)
-3. **Dispositivos móviles**: 360p o 240p
-4. **Archivos pequeños**: 240p o 144p
-
-### 🔧 **Optimización:**
-- **Videos largos**: Usa calidades más bajas
-- **Límite de 50MB**: El bot te avisará si se excede
-- **URLs soportadas**:
-  - `https://www.youtube.com/watch?v=VIDEO_ID`
-  - `https://youtu.be/VIDEO_ID`
-  - `https://m.youtube.com/watch?v=VIDEO_ID`
-
-## 🔄 Comandos Disponibles
-
-```
-/converter mp3 url:https://youtu.be/VIDEO_ID calidad:192
-/converter mp4 url:https://youtu.be/VIDEO_ID calidad:480
-```
-
----
-
-**⚠️ Nota Legal**: Este comando es solo para uso personal y educativo. Respeta los derechos de autor y las políticas de YouTube.
+La conversión del bot depende de FFmpeg para combinar, convertir y validar archivos temporales.
