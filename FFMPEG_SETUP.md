@@ -7,8 +7,10 @@ Para que el comando `/converter` funcione correctamente, FFmpeg debe estar insta
 ### Winget
 
 ```powershell
-winget install Gyan.Dev.FFmpeg
+winget install --id Gyan.Dev.FFmpeg -e
 ```
+
+> Reinicia la terminal después de la instalación y comprueba con `ffmpeg -version`.
 
 ### Chocolatey
 
@@ -55,6 +57,15 @@ Si el comando muestra la versión, la instalación está correcta.
 - Revisa que `ffmpeg` y `ffprobe` estén en PATH
 - Reinicia la terminal o el proceso del bot
 - Si sigue fallando, configura rutas explícitas en la configuración de FFmpeg del proyecto
+
+## Ruta fija en el proyecto
+
+Si quieres forzar la ruta directamente en la app, el proyecto intenta resolverla automáticamente en `src/structure/config/ffmpeg.js` usando rutas típicas de Windows, Linux y macOS. Si tu instalación está en otra carpeta, puedes cambiarla aquí mismo:
+
+```js
+ffmpeg.setFfmpegPath('C:\\ruta\\a\\ffmpeg\\bin\\ffmpeg.exe');
+ffmpeg.setFfprobePath('C:\\ruta\\a\\ffmpeg\\bin\\ffprobe.exe');
+```
 
 ## Nota
 

@@ -1,5 +1,7 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 import ffmpeg from 'fluent-ffmpeg';
 import chalk from 'chalk';
 
@@ -10,29 +12,76 @@ const __dirname = path.dirname(__filename);
  * Configuración de FFmpeg para el bot
  */
 
-// Configurar rutas de FFmpeg (ajustar según la instalación)
-// En Windows, FFmpeg debe estar instalado y en el PATH
-// O especificar rutas absolutas aquí
+const WINDOWS_CANDIDATES = [
+    'C:\\Program Files\\ffmpeg\\bin',
+    'C:\\ffmpeg\\bin',
+    'C:\\Program Files\\Git\\usr\\bin',
+    'C:\\Program Files\\Gyan\\FFmpeg\\bin',
+    'C:\\Program Files\\Gyan\\Gyan\\FFmpeg\\bin',
+    'C:\\Program Files\\Microsoft\\Git\\bin'
+];
+
+const UNIX_CANDIDATES = [
+    '/usr/local/bin',
+    '/usr/bin',
+    '/opt/homebrew/bin',
+    '/opt/local/bin',
+    '/snap/bin'
+];
+
+function findBinary(binaryName) {
+    const searchPaths = process.platform === 'win32'
+        ? [...WINDOWS_CANDIDATES, ...(process.env.PATH ? process.env.PATH.split(path.delimiter) : [])]
+        : [...UNIX_CANDIDATES, ...(process.env.PATH ? process.env.PATH.split(path.delimiter) : [])];
+
+    for (const searchPath of searchPaths) {
+        if (!searchPath) continue;
+
+        const candidate = path.join(searchPath, binaryName);
+        if (fs.existsSync(candidate)) {
+            return candidate;
+        }
+    }
+
+    try {
+        const output = execSync(`where ${binaryName}`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+        const resolved = output.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
+        if (resolved) return resolved;
+    } catch {
+        // Ignorado
+    }
+
+    try {
+        const output = execSync(`which ${binaryName}`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+        const resolved = output.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
+        if (resolved) return resolved;
+    } catch {
+        // Ignorado
+    }
+
+    return null;
+}
 
 try {
-    // Intentar configurar FFmpeg automáticamente
-    // Si FFmpeg está en el PATH del sistema, esto debería funcionar
-    
-    // Para Windows con FFmpeg en PATH:
-    // ffmpeg.setFfmpegPath('ffmpeg');
-    // ffmpeg.setFfprobePath('ffprobe');
-    
-    // Para instalaciones personalizadas, descomentar y ajustar:
-    // ffmpeg.setFfmpegPath('C:\\path\\to\\ffmpeg\\bin\\ffmpeg.exe');
-    // ffmpeg.setFfprobePath('C:\\path\\to\\ffmpeg\\bin\\ffprobe.exe');
-    
+    const ffmpegPath = findBinary(process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
+    const ffprobePath = findBinary(process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe');
+
+    if (ffmpegPath) {
+        ffmpeg.setFfmpegPath(ffmpegPath);
+    }
+
+    if (ffprobePath) {
+        ffmpeg.setFfprobePath(ffprobePath);
+    }
+
     console.log(chalk.green('✅ FFmpeg configurado correctamente'));
-    
+    if (ffmpegPath) console.log(chalk.gray(`   ffmpeg: ${ffmpegPath}`));
+    if (ffprobePath) console.log(chalk.gray(`   ffprobe: ${ffprobePath}`));
 } catch (error) {
     console.warn(chalk.yellow('⚠️ FFmpeg no configurado automáticamente:', error.message));
     console.log(chalk.cyan('💡 Para usar el comando converter, instala FFmpeg:'));
-    console.log(chalk.cyan('   • Windows: https://ffmpeg.org/download.html#build-windows'));
-    console.log(chalk.cyan('   • O usa: winget install ffmpeg'));
+    console.log(chalk.cyan('   • Windows: https://www.ffmpeg.org/download.html#build-windows'));
+    console.log(chalk.cyan('   • O usa: winget install --id Gyan.Dev.FFmpeg -e'));
 }
 
 /**
