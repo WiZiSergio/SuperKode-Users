@@ -70,11 +70,11 @@ module.exports = function(client) {
     
     /**
      * Función para generar ID único para botones
-     * @param {string} prefix - Prefijo para el ID
+     * @param {string} baseName - Nombre base para el ID
      * @returns {string} ID único
      */
-    client.generateButtonId = function(prefix = 'btn') {
-        return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    client.generateButtonId = function(baseName = 'btn') {
+        return `${baseName}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     };
     
     /**
