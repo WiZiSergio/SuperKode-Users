@@ -23,15 +23,17 @@ Este proyecto incluye:
 ## Requirements
 
 - Node.js 22 or newer
-- FFmpeg installed and available in PATH
 - Discord bot token
 - Discord application/client ID
+- FFmpeg portable bundle is downloaded automatically during install
 
 ## Installation
 
 ```bash
 npm install
 ```
+
+The project now includes a bundled FFmpeg fallback. During install it tries to download a portable FFmpeg build into `vendor/ffmpeg/bin`, so the converter does not depend exclusively on the machine PATH.
 
 Create the environment file:
 
@@ -52,6 +54,12 @@ DISCORD_CLIENT_ID=your_client_id
 node spu.js
 ```
 
+If the bundled FFmpeg bundle is missing, run the manual downloader:
+
+```bash
+npm run download:ffmpeg
+```
+
 ## Project structure
 
 ```text
@@ -59,6 +67,8 @@ SuperKode-Users/
 ├── README.md
 ├── package.json
 ├── spu.js
+├── scripts/
+│   └── download-ffmpeg.js
 ├── src/
 │   ├── commands/
 │   │   ├── context/
@@ -71,6 +81,9 @@ SuperKode-Users/
 │   │   ├── events/
 │   │   └── handlers/
 │   └── temp/
+├── vendor/
+│   └── ffmpeg/
+│       └── bin/
 ├── CONVERTER_EXAMPLES.md
 ├── FFMPEG_SETUP.md
 ├── STREAM_COMBINATION_SYSTEM.md

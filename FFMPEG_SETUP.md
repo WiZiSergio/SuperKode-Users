@@ -1,47 +1,30 @@
 # Configuración de FFmpeg
 
-Para que el comando `/converter` funcione correctamente, FFmpeg debe estar instalado y disponible en la PATH del sistema.
+El proyecto usa ahora un enfoque portátil: intenta usar primero una copia local de FFmpeg dentro de `vendor/ffmpeg/bin` y solo recurre al sistema si la versión local no está disponible.
 
-## Windows
+## Instalación automática
 
-### Winget
+Al hacer `npm install` o `npm run download:ffmpeg`, el proyecto intenta descargar una build portable de FFmpeg para el sistema operativo actual y dejarla en:
 
-```powershell
-winget install --id Gyan.Dev.FFmpeg -e
+```text
+vendor/ffmpeg/bin/
 ```
 
-> Reinicia la terminal después de la instalación y comprueba con `ffmpeg -version`.
+## Ruta usada por el bot
 
-### Chocolatey
+El archivo de configuración [src/structure/config/ffmpeg.js](src/structure/config/ffmpeg.js) prioriza esta ruta local:
 
-```powershell
-choco install ffmpeg
+```js
+const VENDOR_FFMPEG_BIN = path.resolve(__dirname, '../../../vendor/ffmpeg/bin');
 ```
 
-### Instalación manual
+Si el ejecutable local existe, se usa antes que el `PATH` del sistema.
 
-1. Descarga FFmpeg desde https://www.ffmpeg.org/download.html
-2. Extrae el paquete
-3. Añade la carpeta `bin` al PATH del sistema
+## Si quieres forzar una ruta manual
 
-## Linux
-
-### Ubuntu/Debian
-
-```bash
-sudo apt update && sudo apt install ffmpeg
-```
-
-### Arch
-
-```bash
-sudo pacman -S ffmpeg
-```
-
-## macOS
-
-```bash
-brew install ffmpeg
+```js
+ffmpeg.setFfmpegPath('C:\\ruta\\a\\ffmpeg\\bin\\ffmpeg.exe');
+ffmpeg.setFfprobePath('C:\\ruta\\a\\ffmpeg\\bin\\ffprobe.exe');
 ```
 
 ## Verificación
@@ -50,23 +33,8 @@ brew install ffmpeg
 ffmpeg -version
 ```
 
-Si el comando muestra la versión, la instalación está correcta.
-
-## Solución rápida si falla
-
-- Revisa que `ffmpeg` y `ffprobe` estén en PATH
-- Reinicia la terminal o el proceso del bot
-- Si sigue fallando, configura rutas explícitas en la configuración de FFmpeg del proyecto
-
-## Ruta fija en el proyecto
-
-Si quieres forzar la ruta directamente en la app, el proyecto intenta resolverla automáticamente en `src/structure/config/ffmpeg.js` usando rutas típicas de Windows, Linux y macOS. Si tu instalación está en otra carpeta, puedes cambiarla aquí mismo:
-
-```js
-ffmpeg.setFfmpegPath('C:\\ruta\\a\\ffmpeg\\bin\\ffmpeg.exe');
-ffmpeg.setFfprobePath('C:\\ruta\\a\\ffmpeg\\bin\\ffprobe.exe');
-```
+Si la ruta local está disponible, también puede probarse directamente desde la carpeta del proyecto.
 
 ## Nota
 
-La conversión del bot depende de FFmpeg para combinar, convertir y validar archivos temporales.
+La conversión del bot depende de FFmpeg para combinar, convertir y validar archivos temporales, por lo que la solución portable evita depender del entorno del usuario u ordenador.

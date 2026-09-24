@@ -7,6 +7,7 @@ import chalk from 'chalk';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const VENDOR_FFMPEG_BIN = path.resolve(__dirname, '../../../vendor/ffmpeg/bin');
 
 /**
  * Configuración de FFmpeg para el bot
@@ -16,6 +17,7 @@ const WINDOWS_CANDIDATES = [
     'C:\\Program Files\\ffmpeg\\bin',
     'C:\\ffmpeg\\bin',
     'C:\\Program Files\\Git\\usr\\bin',
+    'C:\\Program Files\\Git\\bin',
     'C:\\Program Files\\Gyan\\FFmpeg\\bin',
     'C:\\Program Files\\Gyan\\Gyan\\FFmpeg\\bin',
     'C:\\Program Files\\Microsoft\\Git\\bin'
@@ -29,7 +31,11 @@ const UNIX_CANDIDATES = [
     '/snap/bin'
 ];
 
-function findBinary(binaryName) {
+export function resolveLocalFFmpegBinary(binaryName) {
+    return path.join(VENDOR_FFMPEG_BIN, binaryName);
+}
+
+function findSystemBinary(binaryName) {
     const searchPaths = process.platform === 'win32'
         ? [...WINDOWS_CANDIDATES, ...(process.env.PATH ? process.env.PATH.split(path.delimiter) : [])]
         : [...UNIX_CANDIDATES, ...(process.env.PATH ? process.env.PATH.split(path.delimiter) : [])];
@@ -62,9 +68,19 @@ function findBinary(binaryName) {
     return null;
 }
 
+function resolveFFmpegBinary(binaryName) {
+    const localBinary = resolveLocalFFmpegBinary(binaryName);
+    if (fs.existsSync(localBinary)) {
+        return localBinary;
+    }
+    return findSystemBinary(binaryName);
+}
+
 try {
-    const ffmpegPath = findBinary(process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
-    const ffprobePath = findBinary(process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe');
+    const ffmpegBinaryName = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
+    const ffprobeBinaryName = process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe';
+    const ffmpegPath = resolveFFmpegBinary(ffmpegBinaryName);
+    const ffprobePath = resolveFFmpegBinary(ffprobeBinaryName);
 
     if (ffmpegPath) {
         ffmpeg.setFfmpegPath(ffmpegPath);
@@ -79,9 +95,7 @@ try {
     if (ffprobePath) console.log(chalk.gray(`   ffprobe: ${ffprobePath}`));
 } catch (error) {
     console.warn(chalk.yellow('⚠️ FFmpeg no configurado automáticamente:', error.message));
-    console.log(chalk.cyan('💡 Para usar el comando converter, instala FFmpeg:'));
-    console.log(chalk.cyan('   • Windows: https://www.ffmpeg.org/download.html#build-windows'));
-    console.log(chalk.cyan('   • O usa: winget install --id Gyan.Dev.FFmpeg -e'));
+    console.log(chalk.cyan('💡 Para usar el comando converter, instala FFmpeg o descarga la versión portable en vendor/ffmpeg'));
 }
 
 /**
