@@ -2,7 +2,7 @@ const chalk = require('chalk');
 const { registerSlashCommands } = require('../commands/loadCommands');
 
 module.exports = {
-    name: 'ready',
+    name: 'clientReady',
     once: true,
     async execute(client) {
         console.log(chalk.green(`✅ Bot conectado como ${client.user.tag}`));

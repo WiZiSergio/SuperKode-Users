@@ -2,8 +2,8 @@ const chalk = require('chalk');
 const { ActivityType } = require('discord.js');
 
 module.exports = {
-    name: 'ready',
-    once: false,
+    name: 'clientReady',
+    once: true,
     execute(client) {
         // Calcular total de miembros
         let totalMembers = 0;
@@ -26,7 +26,9 @@ module.exports = {
         // Función para cambiar el estado
         const updateStatus = () => {
             const status = statuses[currentIndex];
-            client.user.setActivity(status.name, { type: status.type });
+            client.user.setPresence({
+                activities: [{ name: status.name, type: status.type }]
+            });
 
             console.log(chalk.cyan(`🔄 Estado actualizado: ${status.name}`));
 
