@@ -1,8 +1,7 @@
-const chalk = require('chalk');
+import chalk from 'chalk';
+import { isOwner } from '../structure/config/configowner/owner.js';
+import { loadConfig } from '../structure/loadfolders.js';
 
-/**
- * Utilidades para el sistema de moderación
- */
 class ModerationUtils {
     constructor(client) {
         this.client = client;
@@ -17,9 +16,7 @@ class ModerationUtils {
      */
     isModerator(userId, guildId) {
         try {
-            // Verificar si es owner del bot
-            const { isOwner } = require('../structure/config/configowner/owner');
-            const config = require('../structure/loadfolders').loadConfig();
+            const config = loadConfig();
 
             if (isOwner(userId, config.clientId)) {
                 return true;
@@ -119,9 +116,7 @@ class ModerationUtils {
      */
     validatePermissions(interaction, action) {
         try {
-            // Verificar si es owner del bot
-            const { isOwner } = require('../structure/config/configowner/owner');
-            const config = require('../structure/loadfolders').loadConfig();
+            const config = loadConfig();
 
             if (isOwner(interaction.user.id, config.clientId)) {
                 return true;
@@ -164,4 +159,4 @@ class ModerationUtils {
     }
 }
 
-module.exports = ModerationUtils;
+export default ModerationUtils;

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Bot de Discord desarrollado por WiZiSergio para la gestión de usuarios de SuperKode",
   "main": "spu.js",
+  "type": "module",
   "scripts": {
     "start": "node spu.js",
     "dev": "node spu.js",
@@ -10,7 +11,7 @@
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
-    "chalk": "^4.1.2",
+    "chalk": "^5.6.2",
     "discord.js": "^14.27.0",
     "dotenv": "^18.0.3",
     "fluent-ffmpeg": "^2.1.3"

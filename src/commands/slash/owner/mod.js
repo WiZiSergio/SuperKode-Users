@@ -1,7 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
-const chalk = require('chalk');
+import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import chalk from 'chalk';
+import { isOwner } from '../../../structure/config/configowner/owner.js';
+import { loadConfig } from '../../../structure/loadfolders.js';
 
-module.exports = {
+export default {
     data: new SlashCommandBuilder()
         .setName('mod')
         .setDescription('🛡️ Gestión de moderadores y roles de moderación')
@@ -44,9 +46,7 @@ module.exports = {
                 .setDescription('📋 Ver lista de moderadores y roles')),
 
     async execute(interaction) {
-        // Verificar si el usuario es owner
-        const { isOwner } = require('../../structure/config/configowner/owner');
-        const config = require('../../structure/loadfolders').loadConfig();
+        const config = loadConfig();
 
         if (!isOwner(interaction.user.id, config.clientId)) {
             const noPermEmbed = new EmbedBuilder()

@@ -1,15 +1,20 @@
-const chalk = require('chalk');
-const fs = require('fs');
-const path = require('path');
-const { getGuildId, getGuildName, validateGuildConfig } = require('../config/configguild/guild');
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import chalk from 'chalk';
+import fs from 'node:fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+import { getGuildId, getGuildName, validateGuildConfig } from '../config/configguild/guild.js';
 
 /**
  * Función para cargar comandos slash desde las carpetas de categorías
  * @param {Client} client - Cliente de Discord
  */
-function loadSlashCommands(client) {
+async function loadSlashCommands(client) {
     const commandsPath = path.join(__dirname, '..', '..', 'commands');
-    
+
     if (!fs.existsSync(commandsPath)) {
         console.warn(chalk.yellow(`⚠️ Carpeta de comandos no encontrada: ${commandsPath}`));
         return;
@@ -21,19 +26,17 @@ function loadSlashCommands(client) {
         const folderPath = path.join(commandsPath, folder);
         if (fs.statSync(folderPath).isDirectory()) {
             const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
-            
+
             for (const file of commandFiles) {
                 const filePath = path.join(folderPath, file);
-                
+
                 try {
-                    // Limpiar cache antes de requerir
-                    delete require.cache[require.resolve(filePath)];
-                    const command = require(filePath);
-                    
-                    // Agregar información del archivo al comando
+                    const commandModule = await import(pathToFileURL(filePath).href);
+                    const command = commandModule.default ?? commandModule;
+
                     command._fileName = `${folder}/${file}`;
                     command._category = folder;
-                    
+
                     if ('data' in command && 'execute' in command) {
                         client.commands.set(command.data.name, command);
                         console.log(chalk.green(`✅ Comando cargado: ${command.data.name} (${command._fileName})`));
@@ -98,13 +101,10 @@ async function registerSlashCommands(client) {
 async function reloadSlashCommands(client) {
     console.log(chalk.cyan('🔄 Recargando comandos slash...'));
 
-    // Limpiar comandos existentes
     client.commands.clear();
 
-    // Recargar comandos
-    loadSlashCommands(client);
+    await loadSlashCommands(client);
 
-    // Registrar comandos en el guild específico
     await registerSlashCommands(client);
 }
 
@@ -260,7 +260,20 @@ function getGuildInfo(client) {
     };
 }
 
-module.exports = {
+export {
+    loadSlashCommands,
+    registerSlashCommands,
+    reloadSlashCommands,
+    getCommandsInfo,
+    findCommand,
+    getCommandsByCategory,
+    getCategories,
+    validateCommandStructure,
+    getCommandsStats,
+    getGuildInfo
+};
+
+export default {
     loadSlashCommands,
     registerSlashCommands,
     reloadSlashCommands,

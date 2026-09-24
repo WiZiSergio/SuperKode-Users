@@ -1,12 +1,12 @@
-const chalk = require('chalk');
-const { initializeModeration } = require('../../moderation/index');
+import chalk from 'chalk';
+import { initializeModeration } from '../../moderation/index.js';
 
 /**
  * Configuración de la base de datos de moderación
  * @param {Client} client - Cliente de Discord
  * @param {Object} dbManager - Administrador de bases de datos
  */
-module.exports = function(client, dbManager) {
+export default function(client, dbManager) {
     try {
         // Inicializar el sistema de moderación
         const success = initializeModeration(client);

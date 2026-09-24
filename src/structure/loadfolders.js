@@ -1,10 +1,17 @@
-const chalk = require('chalk');
-const fs = require('fs');
-const path = require('path');
-const { isOwner } = require('./config/configowner/owner');
-const dbManager = require('./databases/database');
-const { loadSlashCommands } = require('./commands/loadCommands');
-require('dotenv').config({ path: path.join(__dirname, 'config', 'configbot', '.env') });
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import dotenv from 'dotenv';
+import chalk from 'chalk';
+import fs from 'node:fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+import { isOwner } from './config/configowner/owner.js';
+import dbManager from './databases/database.js';
+import { loadSlashCommands } from './commands/loadCommands.js';
+
+dotenv.config({ path: path.join(__dirname, 'config', 'configbot', '.env') });
 
 /**
  * Función para cargar la configuración del bot
@@ -52,7 +59,7 @@ function loadConfig() {
  * Función para cargar comandos slash desde las carpetas de categorías
  * @param {Client} client - Cliente de Discord
  */
-function loadCommands(client) {
+async function loadCommands(client) {
     const slashCommandsPath = path.join(__dirname, '..', 'commands', 'slash');
 
     if (!fs.existsSync(slashCommandsPath)) {
@@ -60,8 +67,7 @@ function loadCommands(client) {
         return;
     }
 
-    // Función recursiva para cargar comandos de subcarpetas
-    function loadCommandsFromFolder(folderPath, relativePath = '') {
+    async function loadCommandsFromFolder(folderPath, relativePath = '') {
         const items = fs.readdirSync(folderPath);
 
         for (const item of items) {
@@ -69,17 +75,13 @@ function loadCommands(client) {
             const stats = fs.statSync(itemPath);
 
             if (stats.isDirectory()) {
-                // Si es una carpeta, cargar recursivamente
                 const newRelativePath = relativePath ? `${relativePath}/${item}` : item;
-                loadCommandsFromFolder(itemPath, newRelativePath);
+                await loadCommandsFromFolder(itemPath, newRelativePath);
             } else if (item.endsWith('.js')) {
-                // Si es un archivo .js, cargarlo como comando
                 try {
-                    // Limpiar cache antes de requerir
-                    delete require.cache[require.resolve(itemPath)];
-                    const command = require(itemPath);
+                    const commandModule = await import(pathToFileURL(itemPath).href);
+                    const command = commandModule.default ?? commandModule;
 
-                    // Agregar información del archivo al comando
                     const fileName = relativePath ? `${relativePath}/${item}` : item;
                     command._fileName = fileName;
                     command._category = relativePath ? relativePath.split('/')[0] : 'root';
@@ -98,15 +100,14 @@ function loadCommands(client) {
         }
     }
 
-    // Cargar comandos desde la carpeta slash
-    loadCommandsFromFolder(slashCommandsPath);
+    await loadCommandsFromFolder(slashCommandsPath);
 }
 
 /**
  * Función para cargar eventos del bot
  * @param {Client} client - Cliente de Discord
  */
-function loadEvents(client) {
+async function loadEvents(client) {
     const eventsPath = path.join(__dirname, 'events');
 
     if (!fs.existsSync(eventsPath)) {
@@ -120,11 +121,9 @@ function loadEvents(client) {
         const filePath = path.join(eventsPath, file);
 
         try {
-            // Limpiar cache antes de requerir
-            delete require.cache[require.resolve(filePath)];
-            const event = require(filePath);
+            const eventModule = await import(pathToFileURL(filePath).href);
+            const event = eventModule.default ?? eventModule;
 
-            // Agregar información del archivo al evento
             event._fileName = file;
 
             if (!event.name || !event.execute) {
@@ -149,7 +148,7 @@ function loadEvents(client) {
  * Función para cargar handlers personalizados
  * @param {Client} client - Cliente de Discord
  */
-function loadHandlers(client) {
+async function loadHandlers(client) {
     const handlersPath = path.join(__dirname, 'handlers');
 
     if (!fs.existsSync(handlersPath)) {
@@ -163,9 +162,8 @@ function loadHandlers(client) {
         const filePath = path.join(handlersPath, file);
 
         try {
-            // Limpiar cache antes de requerir
-            delete require.cache[require.resolve(filePath)];
-            const handler = require(filePath);
+            const handlerModule = await import(pathToFileURL(filePath).href);
+            const handler = handlerModule.default ?? handlerModule;
 
             if (typeof handler === 'function') {
                 handler(client);
@@ -183,7 +181,7 @@ function loadHandlers(client) {
  * Función para cargar comandos desde structure/commands
  * @param {Client} client - Cliente de Discord
  */
-function loadStructureCommands(client) {
+async function loadStructureCommands(client) {
     const structureCommandsPath = path.join(__dirname, 'commands');
 
     if (!fs.existsSync(structureCommandsPath)) {
@@ -193,9 +191,8 @@ function loadStructureCommands(client) {
 
     console.log(chalk.green(`✅ Cargador de comandos de estructura disponible: loadCommands.js`));
 
-    // Usar la función loadSlashCommands del módulo commands
     try {
-        loadSlashCommands(client);
+        await loadSlashCommands(client);
         console.log(chalk.green(`✅ Sistema de comandos de estructura inicializado`));
     } catch (error) {
         console.error(chalk.red(`❌ Error al inicializar sistema de comandos de estructura: ${error.message}`));
@@ -206,7 +203,7 @@ function loadStructureCommands(client) {
  * Función para cargar y configurar las bases de datos
  * @param {Client} client - Cliente de Discord
  */
-function loadDatabases(client) {
+async function loadDatabases(client) {
     const databasesPath = path.join(__dirname, 'databases');
 
     if (!fs.existsSync(databasesPath)) {
@@ -214,9 +211,7 @@ function loadDatabases(client) {
         return;
     }
 
-    // Verificar que el administrador de bases de datos esté disponible
     if (dbManager) {
-        // Listar bases de datos existentes
         const existingDatabases = dbManager.listDatabases();
         if (existingDatabases.length > 0) {
             existingDatabases.forEach(dbName => {
@@ -225,10 +220,8 @@ function loadDatabases(client) {
             });
         }
 
-        // Crear bases de datos por defecto si no existen
         const defaultDatabases = [
             { name: 'databasereload', defaultData: [] }
-            // Puedes agregar más bases de datos por defecto aquí
         ];
 
         defaultDatabases.forEach(({ name, defaultData }) => {
@@ -238,14 +231,11 @@ function loadDatabases(client) {
             }
         });
 
-        // Agregar el administrador de bases de datos al cliente para acceso global
         client.dbManager = dbManager;
-
     } else {
         console.error(chalk.red('❌ Error al cargar el administrador de bases de datos'));
     }
 
-    // Buscar archivos .js adicionales en la carpeta databases (excluyendo database.js)
     const databaseFiles = fs.readdirSync(databasesPath).filter(file =>
         file.endsWith('.js') && file !== 'database.js'
     );
@@ -254,9 +244,8 @@ function loadDatabases(client) {
         const filePath = path.join(databasesPath, file);
 
         try {
-            // Limpiar cache antes de requerir
-            delete require.cache[require.resolve(filePath)];
-            const dbConfig = require(filePath);
+            const dbConfigModule = await import(pathToFileURL(filePath).href);
+            const dbConfig = dbConfigModule.default ?? dbConfigModule;
 
             if (typeof dbConfig === 'function') {
                 dbConfig(client, dbManager);
@@ -277,25 +266,23 @@ function loadDatabases(client) {
  * @param {Client} client - Cliente de Discord
  * @returns {Object} Configuración del bot
  */
-function loadAll(client) {
+async function loadAll(client) {
     console.log(chalk.cyan('🚀 Cargando componentes del bot...'));
 
-    // Cargar configuración primero
     const config = loadConfig();
 
-    // Cargar componentes del bot
-    loadCommands(client);
-    loadStructureCommands(client);
-    loadEvents(client);
-    loadHandlers(client);
-    loadDatabases(client);
+    await loadCommands(client);
+    await loadStructureCommands(client);
+    await loadEvents(client);
+    await loadHandlers(client);
+    await loadDatabases(client);
 
     console.log(chalk.green('✅ Todos los componentes cargados exitosamente'));
 
     return config;
 }
 
-module.exports = {
+export {
     loadConfig,
     loadCommands,
     loadStructureCommands,

@@ -1,7 +1,7 @@
-const chalk = require('chalk');
-const { MessageFlags } = require('discord.js');
+import chalk from 'chalk';
+import { MessageFlags } from 'discord.js';
 
-module.exports = {
+export default {
     name: 'interactionCreate',
     async execute(interaction) {
         // Manejar comandos slash

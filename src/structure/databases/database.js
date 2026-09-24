@@ -1,5 +1,9 @@
-const fs = require('fs');
-const path = require('path');
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Administrador de bases de datos JSON
@@ -179,4 +183,4 @@ class DatabaseManager {
 // Crear instancia singleton
 const dbManager = new DatabaseManager();
 
-module.exports = dbManager;
+export default dbManager;

@@ -1,7 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-const chalk = require('chalk');
+import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ButtonBuilder, ButtonStyle, ActionRowBuilder } from 'discord.js';
+import chalk from 'chalk';
 
-module.exports = {
+export default {
     data: new SlashCommandBuilder()
         .setName('cases')
         .setDescription('📋 Ver historial de moderación de un usuario')

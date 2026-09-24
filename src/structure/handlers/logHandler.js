@@ -1,11 +1,11 @@
-const chalk = require('chalk');
-const dbManager = require('../databases/database');
+import chalk from 'chalk';
+import dbManager from '../databases/database.js';
 
 /**
  * Handler para manejar logs avanzados del sistema
  * @param {Client} client - Cliente de Discord
  */
-module.exports = function(client) {
+export default function(client) {
     
     /**
      * Función para crear un log entry estructurado

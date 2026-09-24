@@ -60,7 +60,14 @@ function getOwners() {
     return [...ownerUserIds];
 }
 
-module.exports = {
+export {
+    isOwner,
+    addOwner,
+    removeOwner,
+    getOwners
+};
+
+export default {
     isOwner,
     addOwner,
     removeOwner,

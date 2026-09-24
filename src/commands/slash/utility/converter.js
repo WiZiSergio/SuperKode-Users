@@ -1,11 +1,11 @@
-const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js')
-const ytdl = require('@distube/ytdl-core');
-const { ffmpeg, LIMITS } = require('../../../structure/config/ffmpeg');
-const fs = require('fs');
-const path = require('path');
-const chalk = require('chalk');
+import { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } from 'discord.js';
+import ytdl from '@distube/ytdl-core';
+import { ffmpeg, LIMITS } from '../../../structure/config/ffmpeg.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import chalk from 'chalk';
 
-module.exports = {
+export default {
     data: new SlashCommandBuilder()
         .setName('converter')
         .setDescription('🎵 Convertir videos de YouTube a MP3 o MP4')

@@ -1,10 +1,11 @@
-const chalk = require('chalk');
+import chalk from 'chalk';
+import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from 'discord.js';
 
 /**
  * Handler para manejar interacciones de botones
  * @param {Client} client - Cliente de Discord
  */
-module.exports = function(client) {
+export default function(client) {
     
     /**
      * Mapa para almacenar callbacks de botones temporales
@@ -84,8 +85,6 @@ module.exports = function(client) {
      * @returns {Object} Objeto con botones y row
      */
     client.createConfirmationButtons = function(actionId, options = {}) {
-        const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-        
         const confirmId = this.generateButtonId(`confirm_${actionId}`);
         const cancelId = this.generateButtonId(`cancel_${actionId}`);
         
@@ -117,8 +116,6 @@ module.exports = function(client) {
      * @returns {Object} Objeto con botones y rows
      */
     client.createSelectionButtons = function(actionId, options = []) {
-        const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-        
         const buttons = [];
         const buttonIds = [];
         
@@ -186,8 +183,6 @@ module.exports = function(client) {
      * @returns {Object} Objeto con botones de paginación
      */
     client.createPaginationButtons = function(actionId, currentPage, totalPages) {
-        const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-
         const firstId = this.generateButtonId(`first_${actionId}`);
         const prevId = this.generateButtonId(`prev_${actionId}`);
         const nextId = this.generateButtonId(`next_${actionId}`);
@@ -242,8 +237,6 @@ module.exports = function(client) {
      * @returns {Object} Objeto con botones de acción
      */
     client.createQuickActionButtons = function(actions) {
-        const { ButtonBuilder, ActionRowBuilder } = require('discord.js');
-
         const buttons = [];
         const buttonIds = [];
 

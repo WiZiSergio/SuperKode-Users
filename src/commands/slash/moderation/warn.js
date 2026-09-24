@@ -1,7 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
-const chalk = require('chalk');
+import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import chalk from 'chalk';
 
-module.exports = {
+export default {
     data: new SlashCommandBuilder()
         .setName('warn')
         .setDescription('⚠️ Advertir a un usuario')

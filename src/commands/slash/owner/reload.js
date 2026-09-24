@@ -1,8 +1,13 @@
-const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { loadConfig } = require('../../../structure/loadfolders');
-const dbManager = require('../../../structure/databases/database');
+import path from 'node:path';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
+import { loadConfig } from '../../../structure/loadfolders.js';
+import dbManager from '../../../structure/databases/database.js';
 
-module.exports = {
+export default {
     data: new SlashCommandBuilder()
         .setName('reload')
         .setDescription('🔄 Sistema avanzado de recarga del bot')
@@ -834,9 +839,6 @@ module.exports = {
                     break;
             }
 
-            // Crear archivo temporal y enviarlo
-            const fs = require('fs');
-            const path = require('path');
             const tempDir = path.join(__dirname, '..', '..', '..', 'temp');
 
             // Crear directorio temp si no existe

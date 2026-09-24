@@ -163,7 +163,21 @@ function validateGuildConfig() {
     return true;
 }
 
-module.exports = {
+export {
+    getPrimaryGuild,
+    getGuildId,
+    getGuildName,
+    isMainGuild,
+    isConfiguredGuild,
+    getGuildById,
+    getAllGuilds,
+    addGuild,
+    removeGuild,
+    getGuildInfo,
+    validateGuildConfig
+};
+
+export default {
     getPrimaryGuild,
     getGuildId,
     getGuildName,

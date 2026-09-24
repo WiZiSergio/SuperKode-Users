@@ -1,7 +1,7 @@
-const chalk = require('chalk');
-const { ActivityType } = require('discord.js');
+import chalk from 'chalk';
+import { ActivityType } from 'discord.js';
 
-module.exports = {
+export default {
     name: 'clientReady',
     once: true,
     execute(client) {

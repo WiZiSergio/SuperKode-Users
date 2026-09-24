@@ -1,5 +1,5 @@
-const chalk = require('chalk');
-const ModerationUtils = require('./moderationUtils');
+import chalk from 'chalk';
+import ModerationUtils from './moderationUtils.js';
 
 /**
  * Inicializa el sistema de moderación
@@ -32,7 +32,12 @@ function initializeModeration(client) {
     }
 }
 
-module.exports = {
+export {
+    initializeModeration,
+    ModerationUtils
+};
+
+export default {
     initializeModeration,
     ModerationUtils
 };

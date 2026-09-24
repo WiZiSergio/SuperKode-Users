@@ -1,12 +1,12 @@
-const chalk = require('chalk');
-const { loadCommands, loadStructureCommands, loadEvents, loadHandlers, loadDatabases } = require('../loadfolders');
-const { reloadSlashCommands } = require('../commands/loadCommands');
+import chalk from 'chalk';
+import { loadCommands, loadStructureCommands, loadEvents, loadHandlers, loadDatabases } from '../loadfolders.js';
+import { reloadSlashCommands } from '../commands/loadCommands.js';
 
 /**
  * Handler que agrega métodos de recarga al cliente de Discord
  * @param {Client} client - Cliente de Discord
  */
-module.exports = function(client) {
+export default function(client) {
     
     /**
      * Método para recargar comandos slash (para comando reload)

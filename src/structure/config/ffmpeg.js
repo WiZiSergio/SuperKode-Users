@@ -1,6 +1,10 @@
-const ffmpeg = require('fluent-ffmpeg');
-const path = require('path');
-const chalk = require('chalk');
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import ffmpeg from 'fluent-ffmpeg';
+import chalk from 'chalk';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Configuración de FFmpeg para el bot
@@ -95,7 +99,14 @@ const LIMITS = {
     cleanupDelay: 5000 // 5 segundos para limpiar archivos temporales
 };
 
-module.exports = {
+export {
+    ffmpeg,
+    checkFFmpegAvailability,
+    CONVERSION_SETTINGS,
+    LIMITS
+};
+
+export default {
     ffmpeg,
     checkFFmpegAvailability,
     CONVERSION_SETTINGS,

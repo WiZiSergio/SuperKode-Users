@@ -1,7 +1,7 @@
-const chalk = require('chalk');
-const { registerSlashCommands } = require('../commands/loadCommands');
+import chalk from 'chalk';
+import { registerSlashCommands } from '../commands/loadCommands.js';
 
-module.exports = {
+export default {
     name: 'clientReady',
     once: true,
     async execute(client) {
