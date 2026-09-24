@@ -34,6 +34,59 @@ function normalizeFormatInfo(format) {
     };
 }
 
+async function safeFetchVideoInfo(url) {
+    const flags = {
+        dumpSingleJson: true,
+        noWarnings: true,
+        noCheckCertificates: true,
+        skipDownload: true,
+        flatPlaylist: true,
+        extractorArgs: 'youtube:player_client=android,web',
+    };
+
+    try {
+        const result = await youtubedl(url, flags);
+        if (typeof result === 'string') {
+            const trimmed = result.trim();
+            if (!trimmed) {
+                throw new Error('yt-dlp devolvió una respuesta vacía');
+            }
+            if (trimmed.startsWith('{')) {
+                return JSON.parse(trimmed);
+            }
+            throw new Error(trimmed.slice(0, 250));
+        }
+
+        return result;
+    } catch (error) {
+        const stdout = typeof error?.stdout === 'string' ? error.stdout.trim() : '';
+        const stderr = typeof error?.stderr === 'string' ? error.stderr.trim() : '';
+        const combined = `${stderr}\n${stdout}`.trim();
+
+        if (combined.includes('private') || combined.includes('This video is unavailable')) {
+            throw new Error('El video es privado, fue eliminado o no está disponible para este entorno.');
+        }
+
+        if (combined.includes('age')) {
+            throw new Error('Este video tiene restricciones de edad y requiere autenticación.');
+        }
+
+        if (combined.includes('Sign in to confirm your age')) {
+            throw new Error('Este video requiere confirmación de edad o inicio de sesión.');
+        }
+
+        if (combined.includes('No video formats found')) {
+            throw new Error('YouTube no devolvió formatos reproducibles para este video.');
+        }
+
+        if (typeof stdout === 'string' && stdout.startsWith('{')) {
+            return JSON.parse(stdout);
+        }
+
+        throw new Error('No se pudo obtener información del video. El video puede ser privado, restringido o temporalmente no disponible.');
+    }
+}
+
 export default {
     data: new SlashCommandBuilder()
         .setName('converter')
@@ -477,13 +530,7 @@ async function getVideoInfoWithRetry(url, maxRetries = 3) {
         try {
             console.log(chalk.blue(`🔄 Intento ${attempt}/${maxRetries} - Obteniendo información del video...`));
 
-            const info = await youtubedl(url, {
-                dumpJson: true,
-                noWarnings: true,
-                skipDownload: true,
-                noCheckCertificates: true,
-            });
-
+            const info = await safeFetchVideoInfo(url);
             const normalizedFormats = (info?.formats || []).map(normalizeFormatInfo).filter(format => format.url || format.hasAudio || format.hasVideo);
 
             if (!info?.title || normalizedFormats.length === 0) {
