@@ -3,6 +3,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 const projectRoot = process.cwd();
 const vendorDir = path.resolve(projectRoot, 'vendor', 'ffmpeg');
@@ -18,31 +20,33 @@ function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
-function downloadUrl(url, destination) {
-  if (platform === 'win32') {
-    execSync(`powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '${url}' -OutFile '${destination}'"`, {
-      stdio: 'inherit',
-      shell: true,
-    });
-    return;
+async function downloadUrl(url, destination) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`La descarga falló con estado ${response.status}: ${response.statusText}`);
   }
 
-  execSync(`curl -L "${url}" -o "${destination}"`, {
-    stdio: 'inherit',
-    shell: true,
-  });
+  ensureDir(path.dirname(destination));
+  const fileStream = fs.createWriteStream(destination);
+  await pipeline(Readable.fromWeb(response.body), fileStream);
 }
 
 function copyExecutable(source, destination) {
   ensureDir(path.dirname(destination));
   fs.copyFileSync(source, destination);
+  if (process.platform !== 'win32') {
+    fs.chmodSync(destination, 0o755);
+  }
 }
 
 function findFile(root, fileName) {
+  if (!root || !fs.existsSync(root)) return null;
+
   const stack = [root];
   while (stack.length > 0) {
     const current = stack.pop();
     if (!current || !fs.existsSync(current)) continue;
+
     const entries = fs.readdirSync(current, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = path.join(current, entry.name);
@@ -50,11 +54,13 @@ function findFile(root, fileName) {
         stack.push(fullPath);
         continue;
       }
+
       if (entry.name.toLowerCase() === fileName.toLowerCase()) {
         return fullPath;
       }
     }
   }
+
   return null;
 }
 
@@ -113,7 +119,7 @@ function extractArchive(archivePath, outputDir) {
   });
 }
 
-function ensureBundledBinary() {
+async function ensureBundledBinary() {
   const ffmpegBinary = path.join(binDir, process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
   const ffprobeBinary = path.join(binDir, process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe');
 
@@ -129,25 +135,13 @@ function ensureBundledBinary() {
   const archivePath = path.join(vendorDir, config.fileName);
 
   log(`⬇️ Descargando FFmpeg portable para ${platform} (${arch})...`);
-  downloadUrl(config.url, archivePath);
+  await downloadUrl(config.url, archivePath);
 
   log('📦 Extrayendo el paquete portable...');
   extractArchive(archivePath, vendorDir);
 
-  const extractedRoot = fs.existsSync(path.join(vendorDir, 'bin'))
-    ? vendorDir
-    : fs.readdirSync(vendorDir)
-        .map((entry) => path.join(vendorDir, entry))
-        .find((entry) => fs.statSync(entry).isDirectory() && fs.existsSync(path.join(entry, 'bin')));
-
-  const extractedBinDir = extractedRoot ? path.join(extractedRoot, 'bin') : null;
-
-  if (!extractedBinDir || !fs.existsSync(extractedBinDir)) {
-    throw new Error('No se pudo localizar la carpeta bin dentro del paquete descargado.');
-  }
-
-  const sourceFfmpeg = findFile(extractedBinDir, config.binaryName);
-  const sourceFfprobe = findFile(extractedBinDir, config.probeName);
+  const sourceFfmpeg = findFile(vendorDir, config.binaryName);
+  const sourceFfprobe = findFile(vendorDir, config.probeName);
 
   if (!sourceFfmpeg || !sourceFfprobe) {
     throw new Error('No se encontraron ffmpeg y ffprobe dentro del paquete descargado.');
@@ -161,7 +155,7 @@ function ensureBundledBinary() {
 }
 
 try {
-  ensureBundledBinary();
+  await ensureBundledBinary();
 } catch (error) {
   console.error('❌ Error descargando FFmpeg portátil:', error.message);
   process.exitCode = 1;
